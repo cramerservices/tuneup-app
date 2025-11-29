@@ -1,41 +1,48 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { checklistData } from '../data/checklistItems'
-import { ChecklistItem } from './ChecklistItem'
+import { getItemsForServices, additionalSuggestions } from '../data/checklistItems'
+import { ChecklistItem as ChecklistItemComponent } from './ChecklistItem'
 
 interface ItemState {
-  category: string
   itemName: string
   completed: boolean
   notes: string
   severity: number
 }
 
-export function InspectionForm() {
+interface InspectionFormProps {
+  serviceTypes: string[]
+  onViewSummary: (data: {
+    customerName: string
+    address: string
+    technicianName: string
+    inspectionDate: string
+    items: ItemState[]
+    selectedSuggestions: string[]
+  }) => void
+}
+
+export function InspectionFormUpdated({ serviceTypes, onViewSummary }: InspectionFormProps) {
   const [customerName, setCustomerName] = useState('')
   const [address, setAddress] = useState('')
   const [technicianName, setTechnicianName] = useState('')
   const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().split('T')[0])
   const [generalNotes, setGeneralNotes] = useState('')
   const [items, setItems] = useState<ItemState[]>([])
+  const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
-    const initialItems: ItemState[] = []
-    checklistData.forEach(category => {
-      category.items.forEach(item => {
-        initialItems.push({
-          category: category.category,
-          itemName: item,
-          completed: false,
-          notes: '',
-          severity: 0
-        })
-      })
-    })
+    const checklistItems = getItemsForServices(serviceTypes)
+    const initialItems: ItemState[] = checklistItems.map(item => ({
+      itemName: item.item,
+      completed: false,
+      notes: '',
+      severity: 0
+    }))
     setItems(initialItems)
-  }, [])
+  }, [serviceTypes])
 
   const handleItemToggle = (index: number) => {
     const newItems = [...items]
@@ -55,6 +62,14 @@ export function InspectionForm() {
     setItems(newItems)
   }
 
+  const toggleSuggestion = (suggestion: string) => {
+    setSelectedSuggestions(prev =>
+      prev.includes(suggestion)
+        ? prev.filter(s => s !== suggestion)
+        : [...prev, suggestion]
+    )
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setSaveMessage('')
@@ -67,7 +82,9 @@ export function InspectionForm() {
           address: address,
           technician_name: technicianName,
           inspection_date: inspectionDate,
-          notes: generalNotes
+          notes: generalNotes,
+          service_types: serviceTypes,
+          selected_suggestions: selectedSuggestions
         })
         .select()
         .single()
@@ -76,11 +93,12 @@ export function InspectionForm() {
 
       const itemsToInsert = items.map(item => ({
         inspection_id: inspection.id,
-        category: item.category,
+        category: '',
         item_name: item.itemName,
         completed: item.completed,
         notes: item.notes,
-        severity: item.severity
+        severity: item.severity,
+        item_type: 'checklist'
       }))
 
       const { error: itemsError } = await supabase
@@ -90,9 +108,17 @@ export function InspectionForm() {
       if (itemsError) throw itemsError
 
       setSaveMessage('Inspection saved successfully!')
+
       setTimeout(() => {
-        handleReset()
-      }, 2000)
+        onViewSummary({
+          customerName,
+          address,
+          technicianName,
+          inspectionDate,
+          items,
+          selectedSuggestions
+        })
+      }, 1500)
     } catch (error) {
       console.error('Error saving inspection:', error)
       setSaveMessage('Error saving inspection. Please try again.')
@@ -101,37 +127,30 @@ export function InspectionForm() {
     }
   }
 
-  const handleReset = () => {
-    setCustomerName('')
-    setAddress('')
-    setTechnicianName('')
-    setInspectionDate(new Date().toISOString().split('T')[0])
-    setGeneralNotes('')
-
-    const resetItems: ItemState[] = []
-    checklistData.forEach(category => {
-      category.items.forEach(item => {
-        resetItems.push({
-          category: category.category,
-          itemName: item,
-          completed: false,
-          notes: '',
-          severity: 0
-        })
-      })
-    })
-    setItems(resetItems)
-    setSaveMessage('')
-  }
-
   const completedCount = items.filter(item => item.completed).length
   const totalCount = items.length
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+
+  const getServiceTypeLabel = (type: string) => {
+    switch (type) {
+      case 'furnace': return 'Furnace'
+      case 'ac': return 'AC/Heat Pump'
+      case 'hot_water_tank': return 'Hot Water Tank'
+      default: return type
+    }
+  }
 
   return (
     <div className="inspection-form">
       <header className="form-header">
         <h1>HVAC Tune-Up Checklist</h1>
+        <div className="service-types-display">
+          {serviceTypes.map(type => (
+            <span key={type} className="service-badge">
+              {getServiceTypeLabel(type)}
+            </span>
+          ))}
+        </div>
         <div className="progress-bar">
           <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
           <span className="progress-text">{completedCount} / {totalCount} completed</span>
@@ -181,32 +200,38 @@ export function InspectionForm() {
 
       <section className="checklist-section">
         <h2>Inspection Checklist</h2>
-        {checklistData.map((category, categoryIndex) => (
-          <div key={categoryIndex} className="category-section">
-            <h3 className="category-title">{category.category}</h3>
-            <div className="category-items">
-              {category.items.map((item) => {
-                const globalIndex = items.findIndex(
-                  i => i.category === category.category && i.itemName === item
-                )
-                if (globalIndex === -1) return null
-                const itemState = items[globalIndex]
-                return (
-                  <ChecklistItem
-                    key={globalIndex}
-                    itemName={itemState.itemName}
-                    completed={itemState.completed}
-                    notes={itemState.notes}
-                    severity={itemState.severity}
-                    onToggle={() => handleItemToggle(globalIndex)}
-                    onNotesChange={(notes) => handleNotesChange(globalIndex, notes)}
-                    onSeverityChange={(severity) => handleSeverityChange(globalIndex, severity)}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        ))}
+        <div className="category-items">
+          {items.map((item, index) => (
+            <ChecklistItemComponent
+              key={index}
+              itemName={item.itemName}
+              completed={item.completed}
+              notes={item.notes}
+              severity={item.severity}
+              onToggle={() => handleItemToggle(index)}
+              onNotesChange={(notes) => handleNotesChange(index, notes)}
+              onSeverityChange={(severity) => handleSeverityChange(index, severity)}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="suggestions-section">
+        <h2>Additional Suggestions</h2>
+        <p className="section-description">Select any additional items or upgrades you recommend to the customer:</p>
+        <div className="suggestions-grid">
+          {additionalSuggestions.map((suggestion, index) => (
+            <label key={index} className="suggestion-item">
+              <input
+                type="checkbox"
+                checked={selectedSuggestions.includes(suggestion)}
+                onChange={() => toggleSuggestion(suggestion)}
+                className="checkbox"
+              />
+              <span>{suggestion}</span>
+            </label>
+          ))}
+        </div>
       </section>
 
       <section className="general-notes-section">
@@ -227,18 +252,11 @@ export function InspectionForm() {
           </div>
         )}
         <button
-          onClick={handleReset}
-          className="btn btn-secondary"
-          disabled={saving}
-        >
-          Reset Form
-        </button>
-        <button
           onClick={handleSave}
           className="btn btn-primary"
           disabled={saving}
         >
-          {saving ? 'Saving...' : 'Save Inspection'}
+          {saving ? 'Saving...' : 'Save & View Summary'}
         </button>
       </div>
     </div>

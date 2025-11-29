@@ -20,6 +20,111 @@ body {
   padding: 24px;
 }
 
+.service-selection {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.service-selection-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.service-selection-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.service-selection-header p {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.service-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  padding: 48px 32px;
+}
+
+.service-card {
+  background: white;
+  border: 3px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 32px 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  text-align: center;
+}
+
+.service-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+}
+
+.service-card.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.service-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.service-label {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.service-checkbox {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  transition: all 0.2s;
+}
+
+.service-card.selected .service-checkbox {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.checkmark {
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.service-selection-footer {
+  padding: 32px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-large {
+  padding: 16px 48px;
+  font-size: 18px;
+}
+
 .inspection-form {
   max-width: 1200px;
   margin: 0 auto;
@@ -38,7 +143,22 @@ body {
 .form-header h1 {
   font-size: 32px;
   font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.service-types-display {
+  display: flex;
+  gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.service-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .progress-bar {
@@ -296,6 +416,214 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.suggestions-section {
+  padding: 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.suggestions-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.section-description {
+  color: #6b7280;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.suggestion-item input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.summary-report {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.summary-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 32px;
+}
+
+.summary-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.summary-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 13px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.summary-section {
+  padding: 32px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.summary-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+.no-issues {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.issue-item {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.issue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.issue-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.severity-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.issue-notes {
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.suggestions-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.suggestions-list li {
+  background: #eff6ff;
+  border: 1px solid #3b82f6;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  padding: 32px;
+  background: #f9fafb;
+}
+
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.summary-actions {
+  padding: 32px;
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
 .form-actions {
   padding: 32px;
   display: flex;
@@ -360,6 +688,39 @@ body {
   background: #fee2e2;
   color: #991b1b;
   border: 1px solid #ef4444;
+}
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .app {
+    padding: 0;
+  }
+
+  .summary-report {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .summary-actions {
+    display: none;
+  }
+
+  .summary-header {
+    background: #1e40af;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .issue-item {
+    break-inside: avoid;
+  }
+
+  .stat-card {
+    break-inside: avoid;
+  }
 }
 
 @media (max-width: 768px) {
