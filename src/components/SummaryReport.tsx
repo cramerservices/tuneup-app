@@ -114,6 +114,17 @@ export function SummaryReport({
   return (
     <div className="summary-report" id="summary-report">
       <div className="summary-header">
+        <div className="summary-header-top">
+          <img src="/CramerLogoText.png" alt="Cramer Services LLC" className="summary-logo" />
+          <div className="summary-contact-info">
+            <div className="contact-item">
+              <strong>Phone:</strong> (314) 267-8594
+            </div>
+            <div className="contact-item">
+              <strong>Email:</strong> cramerservicesllc@gmail.com
+            </div>
+          </div>
+        </div>
         <h1>Inspection Summary Report</h1>
         <div className="summary-info">
           <div className="info-row">

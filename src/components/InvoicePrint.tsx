@@ -21,6 +21,12 @@ export function InvoicePrint({
     <div className="invoice-print" id="invoice-print">
       <div className="invoice-header">
         <div className="company-info">
+          <img src="/CramerLogoText.png" alt="Cramer Services LLC" className="invoice-logo" />
+          <div className="company-contact">
+            <p className="contact-line">
+              <strong>Phone:</strong> (314) 267-8594 | <strong>Email:</strong> cramerservicesllc@gmail.com
+            </p>
+          </div>
           <h1>HVAC Service Invoice</h1>
           <p className="invoice-date">Invoice Date: {currentDate}</p>
           <p className="service-date">Service Date: {inspectionDate}</p>

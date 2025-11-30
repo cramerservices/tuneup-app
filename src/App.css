@@ -527,6 +527,32 @@ body {
   padding: 32px;
 }
 
+.summary-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.summary-logo {
+  height: 60px;
+  width: auto;
+}
+
+.summary-contact-info {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-item {
+  font-size: 14px;
+  color: white;
+}
+
 .summary-header h1 {
   font-size: 32px;
   font-weight: 700;
@@ -1286,6 +1312,22 @@ body {
   margin-bottom: 32px;
   padding-bottom: 24px;
   border-bottom: 3px solid #1e40af;
+}
+
+.invoice-logo {
+  height: 70px;
+  width: auto;
+  margin-bottom: 16px;
+}
+
+.company-contact {
+  margin-bottom: 16px;
+}
+
+.contact-line {
+  color: #4b5563;
+  font-size: 14px;
+  margin: 8px 0;
 }
 
 .company-info h1 {
