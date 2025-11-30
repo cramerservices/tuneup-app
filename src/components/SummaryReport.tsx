@@ -222,6 +222,92 @@ export function SummaryReport({
         </div>
       )}
 
+      <div className="summary-section maintenance-plans-section">
+        <h2>Protect Your Investment with a Maintenance Plan</h2>
+        <p className="section-intro">Keep your systems running smoothly year-round and save money with our comprehensive maintenance plans:</p>
+
+        <div className="maintenance-plans-grid">
+          <div className="maintenance-plan-card basic-plan">
+            <div className="plan-header">
+              <h3 className="plan-title">Basic Care Plan</h3>
+              <div className="plan-price">
+                <span className="price-amount">$20</span>
+                <span className="price-period">/month</span>
+              </div>
+            </div>
+            <div className="plan-benefits">
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">One annual tune-up included</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Two service calls per year with waived service fees</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Priority scheduling for emergencies</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Peace of mind knowing your system is maintained</span>
+              </div>
+            </div>
+            <p className="plan-pitch">
+              Perfect for homeowners who want to protect their HVAC investment without breaking the bank.
+              Regular maintenance prevents costly breakdowns and keeps your system running efficiently,
+              often paying for itself in energy savings alone.
+            </p>
+          </div>
+
+          <div className="maintenance-plan-card premium-plan">
+            <div className="plan-badge">Most Popular</div>
+            <div className="plan-header">
+              <h3 className="plan-title">Premium Care Plan</h3>
+              <div className="plan-price">
+                <span className="price-amount">$30</span>
+                <span className="price-period">/month</span>
+              </div>
+            </div>
+            <div className="plan-benefits">
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Free annual HVAC system tune-up</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Free annual hot water tank maintenance</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Three service calls per year with waived service fees</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Priority emergency service response</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">15% discount on repairs and parts</span>
+              </div>
+              <div className="benefit-item">
+                <span className="benefit-icon">✓</span>
+                <span className="benefit-text">Extended equipment warranty protection</span>
+              </div>
+            </div>
+            <p className="plan-pitch">
+              Our most comprehensive protection plan covers both your HVAC and hot water systems.
+              With regular professional maintenance, you'll enjoy maximum energy efficiency, longer equipment life,
+              and fewer unexpected repairs. The best value for complete home comfort system protection.
+            </p>
+          </div>
+        </div>
+
+        <div className="plans-cta">
+          <p className="cta-text">Ask your technician today about enrolling in a maintenance plan and start saving!</p>
+        </div>
+      </div>
+
       <div className="summary-stats">
         <div className="stat-card">
           <div className="stat-value">{items.filter(i => i.completed).length}</div>

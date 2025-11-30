@@ -778,6 +778,157 @@ body {
   font-weight: 500;
 }
 
+.maintenance-plans-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.maintenance-plans-section h2 {
+  color: #0c4a6e;
+}
+
+.maintenance-plans-section .section-intro {
+  color: #075985;
+}
+
+.maintenance-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.maintenance-plan-card {
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  position: relative;
+  border: 3px solid transparent;
+}
+
+.maintenance-plan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.basic-plan {
+  border-color: #3b82f6;
+}
+
+.premium-plan {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, white 100%);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: #f59e0b;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.plan-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-amount {
+  font-size: 36px;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.premium-plan .price-amount {
+  color: #d97706;
+}
+
+.price-period {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.plan-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.benefit-icon {
+  background: #10b981;
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.benefit-text {
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.plan-pitch {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.plans-cta {
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.cta-text {
+  color: #1e40af;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
 .recommendations-list {
   display: flex;
   flex-direction: column;
