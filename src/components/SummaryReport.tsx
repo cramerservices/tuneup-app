@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { getSuggestionInfo } from '../data/suggestionPitches'
+import { InvoiceModal, InvoiceData } from './InvoiceModal'
+import { InvoicePrint } from './InvoicePrint'
 
 interface ItemState {
   itemName: string
@@ -41,6 +43,9 @@ export function SummaryReport({
   onExportPDF
 }: SummaryReportProps) {
   const [showFullReport, setShowFullReport] = useState(false)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
+  const [showInvoicePrint, setShowInvoicePrint] = useState(false)
 
   const getServiceTypeLabel = (type: string) => {
     switch (type) {
@@ -69,6 +74,40 @@ export function SummaryReport({
   const uncheckedItems = items.filter(item => !item.completed)
   const itemsWithIssues = uncheckedItems.filter(item => item.severity > 0 || item.notes.trim() !== '')
   const completedItems = items.filter(item => item.completed)
+
+  const handleGenerateInvoice = (data: InvoiceData) => {
+    setInvoiceData(data)
+    setShowInvoiceModal(false)
+    setShowInvoicePrint(true)
+
+    setTimeout(() => {
+      window.print()
+    }, 100)
+  }
+
+  const handleCloseInvoicePrint = () => {
+    setShowInvoicePrint(false)
+    setInvoiceData(null)
+  }
+
+  if (showInvoicePrint && invoiceData) {
+    return (
+      <div>
+        <div className="no-print">
+          <button onClick={handleCloseInvoicePrint} className="btn btn-secondary" style={{ margin: '20px' }}>
+            ← Back to Summary
+          </button>
+        </div>
+        <InvoicePrint
+          customerName={customerName}
+          address={address}
+          inspectionDate={inspectionDate}
+          technicianName={technicianName}
+          invoiceData={invoiceData}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="summary-report" id="summary-report">
@@ -326,10 +365,21 @@ export function SummaryReport({
         <button onClick={onBack} className="btn btn-secondary">
           Back to Inspection
         </button>
+        <button onClick={() => setShowInvoiceModal(true)} className="btn btn-success">
+          Generate Invoice
+        </button>
         <button onClick={onExportPDF} className="btn btn-primary">
           Export as PDF
         </button>
       </div>
+
+      {showInvoiceModal && (
+        <InvoiceModal
+          selectedSuggestions={selectedSuggestions}
+          onClose={() => setShowInvoiceModal(false)}
+          onGenerateInvoice={handleGenerateInvoice}
+        />
+      )}
     </div>
   )
 }
