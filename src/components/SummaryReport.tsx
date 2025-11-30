@@ -72,7 +72,9 @@ export function SummaryReport({
   }
 
   const uncheckedItems = items.filter(item => !item.completed)
-  const itemsWithIssues = uncheckedItems.filter(item => item.severity > 0 || item.notes.trim() !== '')
+  const itemsWithIssues = uncheckedItems
+    .filter(item => item.severity > 0 || item.notes.trim() !== '')
+    .sort((a, b) => b.severity - a.severity)
   const completedItems = items.filter(item => item.completed)
 
   const handleGenerateInvoice = (data: InvoiceData) => {

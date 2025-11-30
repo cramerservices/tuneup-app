@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getSuggestionInfo } from '../data/suggestionPitches'
 
 interface ServicePrice {
   furnace: boolean
@@ -90,7 +91,8 @@ export function InvoiceModal({
       if (exists) {
         return prev.filter(s => s.suggestion !== suggestion)
       } else {
-        return [...prev, { suggestion, price: 0 }]
+        const suggestionInfo = getSuggestionInfo(suggestion)
+        return [...prev, { suggestion, price: suggestionInfo.price }]
       }
     })
   }
