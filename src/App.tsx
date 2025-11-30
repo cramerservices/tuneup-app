@@ -13,6 +13,13 @@ interface ItemState {
   severity: number
 }
 
+interface EquipmentInfo {
+  serviceType: string
+  brand: string
+  modelNumber: string
+  serialNumber: string
+}
+
 interface SummaryData {
   customerName: string
   address: string
@@ -21,6 +28,7 @@ interface SummaryData {
   items: ItemState[]
   selectedSuggestions: string[]
   generalNotes: string
+  equipment: EquipmentInfo[]
 }
 
 function App() {
@@ -71,6 +79,7 @@ function App() {
           items={summaryData.items}
           selectedSuggestions={summaryData.selectedSuggestions}
           generalNotes={summaryData.generalNotes}
+          equipment={summaryData.equipment}
           onBack={handleBackToInspection}
           onExportPDF={handleExportPDF}
         />

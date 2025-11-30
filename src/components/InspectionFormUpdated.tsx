@@ -10,6 +10,13 @@ interface ItemState {
   severity: number
 }
 
+interface EquipmentInfo {
+  serviceType: string
+  brand: string
+  modelNumber: string
+  serialNumber: string
+}
+
 interface InspectionFormProps {
   serviceTypes: string[]
   onViewSummary: (data: {
@@ -20,6 +27,7 @@ interface InspectionFormProps {
     items: ItemState[]
     selectedSuggestions: string[]
     generalNotes: string
+    equipment: EquipmentInfo[]
   }) => void
   onBackToServiceSelection: () => void
 }
@@ -32,8 +40,19 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
   const [generalNotes, setGeneralNotes] = useState('')
   const [items, setItems] = useState<ItemState[]>([])
   const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
+  const [equipment, setEquipment] = useState<EquipmentInfo[]>([])
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+
+  useEffect(() => {
+    const initialEquipment = serviceTypes.map(type => ({
+      serviceType: type,
+      brand: '',
+      modelNumber: '',
+      serialNumber: ''
+    }))
+    setEquipment(initialEquipment)
+  }, [serviceTypes])
 
   useEffect(() => {
     const checklistItems = getItemsForServices(serviceTypes)
@@ -109,6 +128,24 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
 
       if (itemsError) throw itemsError
 
+      const equipmentToInsert = equipment
+        .filter(equip => equip.brand || equip.modelNumber || equip.serialNumber)
+        .map(equip => ({
+          inspection_id: inspection.id,
+          service_type: equip.serviceType,
+          brand: equip.brand,
+          model_number: equip.modelNumber,
+          serial_number: equip.serialNumber
+        }))
+
+      if (equipmentToInsert.length > 0) {
+        const { error: equipmentError } = await supabase
+          .from('equipment_info')
+          .insert(equipmentToInsert)
+
+        if (equipmentError) throw equipmentError
+      }
+
       setSaveMessage('Inspection saved successfully!')
 
       setTimeout(() => {
@@ -119,7 +156,8 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
           inspectionDate,
           items,
           selectedSuggestions,
-          generalNotes
+          generalNotes,
+          equipment
         })
       }, 1500)
     } catch (error) {
@@ -204,6 +242,56 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
             />
           </div>
         </div>
+      </section>
+
+      <section className="equipment-info">
+        <h2>Equipment Information</h2>
+        {equipment.map((equip, index) => (
+          <div key={index} className="equipment-card">
+            <h3 className="equipment-type-header">{getServiceTypeLabel(equip.serviceType)}</h3>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Brand</label>
+                <input
+                  type="text"
+                  value={equip.brand}
+                  onChange={(e) => {
+                    const newEquipment = [...equipment]
+                    newEquipment[index].brand = e.target.value
+                    setEquipment(newEquipment)
+                  }}
+                  placeholder="Enter brand name"
+                />
+              </div>
+              <div className="form-field">
+                <label>Model Number</label>
+                <input
+                  type="text"
+                  value={equip.modelNumber}
+                  onChange={(e) => {
+                    const newEquipment = [...equipment]
+                    newEquipment[index].modelNumber = e.target.value
+                    setEquipment(newEquipment)
+                  }}
+                  placeholder="Enter model number"
+                />
+              </div>
+              <div className="form-field">
+                <label>Serial Number</label>
+                <input
+                  type="text"
+                  value={equip.serialNumber}
+                  onChange={(e) => {
+                    const newEquipment = [...equipment]
+                    newEquipment[index].serialNumber = e.target.value
+                    setEquipment(newEquipment)
+                  }}
+                  placeholder="Enter serial number"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
       </section>
 
       <section className="checklist-section">

@@ -8,6 +8,13 @@ interface ItemState {
   severity: number
 }
 
+interface EquipmentInfo {
+  serviceType: string
+  brand: string
+  modelNumber: string
+  serialNumber: string
+}
+
 interface SummaryReportProps {
   customerName: string
   address: string
@@ -16,6 +23,7 @@ interface SummaryReportProps {
   items: ItemState[]
   selectedSuggestions: string[]
   generalNotes: string
+  equipment: EquipmentInfo[]
   onBack: () => void
   onExportPDF: () => void
 }
@@ -28,10 +36,20 @@ export function SummaryReport({
   items,
   selectedSuggestions,
   generalNotes,
+  equipment,
   onBack,
   onExportPDF
 }: SummaryReportProps) {
   const [showFullReport, setShowFullReport] = useState(false)
+
+  const getServiceTypeLabel = (type: string) => {
+    switch (type) {
+      case 'furnace': return 'Furnace'
+      case 'ac': return 'AC/Heat Pump'
+      case 'hot_water_tank': return 'Hot Water Tank'
+      default: return type
+    }
+  }
   const getSeverityLabel = (level: number) => {
     if (level === 0) return 'No Issue'
     if (level <= 3) return 'Minor'
@@ -75,6 +93,42 @@ export function SummaryReport({
           </div>
         </div>
       </div>
+
+      {equipment && equipment.length > 0 && (
+        <div className="summary-section equipment-summary">
+          <h2>Equipment Information</h2>
+          <div className="equipment-summary-grid">
+            {equipment.map((equip, index) => (
+              <div key={index} className="equipment-summary-card">
+                <h3 className="equipment-summary-title">{getServiceTypeLabel(equip.serviceType)}</h3>
+                <div className="equipment-details">
+                  {equip.brand && (
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Brand:</span>
+                      <span className="detail-value">{equip.brand}</span>
+                    </div>
+                  )}
+                  {equip.modelNumber && (
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Model:</span>
+                      <span className="detail-value">{equip.modelNumber}</span>
+                    </div>
+                  )}
+                  {equip.serialNumber && (
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Serial:</span>
+                      <span className="detail-value">{equip.serialNumber}</span>
+                    </div>
+                  )}
+                  {!equip.brand && !equip.modelNumber && !equip.serialNumber && (
+                    <p className="no-equipment-info">No equipment information provided</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="summary-section">
         <div className="section-header-with-toggle">
