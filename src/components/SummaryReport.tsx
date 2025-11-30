@@ -1,4 +1,4 @@
-import { getSuggestionPitch } from '../data/suggestionPitches'
+import { getSuggestionInfo } from '../data/suggestionPitches'
 
 interface ItemState {
   itemName: string
@@ -120,12 +120,22 @@ export function SummaryReport({
           <h2>Recommended Upgrades & Improvements</h2>
           <p className="section-intro">Based on today's inspection, we recommend the following upgrades to enhance your system's performance, efficiency, and reliability:</p>
           <div className="recommendations-list">
-            {selectedSuggestions.map((suggestion, index) => (
-              <div key={index} className="recommendation-card">
-                <h3 className="recommendation-title">{suggestion}</h3>
-                <p className="recommendation-pitch">{getSuggestionPitch(suggestion)}</p>
-              </div>
-            ))}
+            {selectedSuggestions.map((suggestion, index) => {
+              const info = getSuggestionInfo(suggestion)
+              return (
+                <div key={index} className="recommendation-card">
+                  <div className="recommendation-header">
+                    <h3 className="recommendation-title">{suggestion}</h3>
+                    {info.price > 0 && (
+                      <span className="recommendation-price">
+                        {info.priceLabel || `$${info.price}`}
+                      </span>
+                    )}
+                  </div>
+                  <p className="recommendation-pitch">{info.pitch}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

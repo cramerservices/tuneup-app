@@ -35,7 +35,7 @@ export const hotWaterTankItems: ChecklistItem[] = [
 export const additionalSuggestions: string[] = [
   'Power surge protector',
   'Smart Thermostat',
-  'Leak detector sensor',
+  'Smart water monitor and automatic water shut off valve',
   'Smart air register vents',
   'Air purifier',
   'UV light',
