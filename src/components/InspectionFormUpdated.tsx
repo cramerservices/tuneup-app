@@ -335,7 +335,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
         <textarea
           value={generalNotes}
           onChange={(e) => setGeneralNotes(e.target.value)}
-          placeholder="Add any general notes or recommendations for the customer..."
+          placeholder="Add any additional observations, recommendations, or important information for the customer..."
           className="general-notes-textarea"
           rows={5}
         />

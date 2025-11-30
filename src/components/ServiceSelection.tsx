@@ -31,7 +31,7 @@ export function ServiceSelection({ onServicesSelected }: ServiceSelectionProps) 
     <div className="service-selection">
       <div className="service-selection-header">
         <h1>Select Service Type</h1>
-        <p>Choose which tune-ups the customer wants</p>
+        <p>Choose which services will be performed today</p>
       </div>
 
       <div className="service-cards">

@@ -224,7 +224,7 @@ export function SummaryReport({
 
       <div className="summary-section maintenance-plans-section">
         <h2>Protect Your Investment with a Maintenance Plan</h2>
-        <p className="section-intro">Keep your systems running smoothly year-round and save money with our comprehensive maintenance plans:</p>
+        <p className="section-intro">Keep your systems running smoothly year-round and avoid costly emergency repairs. Choose the plan that fits your needs:</p>
 
         <div className="maintenance-plans-grid">
           <div className="maintenance-plan-card basic-plan">
@@ -238,25 +238,24 @@ export function SummaryReport({
             <div className="plan-benefits">
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">One annual tune-up included</span>
+                <span className="benefit-text">One annual system tune-up</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Two service calls per year with waived service fees</span>
+                <span className="benefit-text">Two service calls per year - service fees waived</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Priority scheduling for emergencies</span>
+                <span className="benefit-text">Priority scheduling for your comfort</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Peace of mind knowing your system is maintained</span>
+                <span className="benefit-text">Transferable if you sell your home</span>
               </div>
             </div>
             <p className="plan-pitch">
-              Perfect for homeowners who want to protect their HVAC investment without breaking the bank.
-              Regular maintenance prevents costly breakdowns and keeps your system running efficiently,
-              often paying for itself in energy savings alone.
+              Perfect for homeowners who want reliable comfort without surprises. Regular maintenance prevents costly breakdowns
+              and keeps your system running efficiently—often paying for itself through energy savings and avoiding emergency repairs.
             </p>
           </div>
 
@@ -272,39 +271,39 @@ export function SummaryReport({
             <div className="plan-benefits">
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Free annual HVAC system tune-up</span>
+                <span className="benefit-text">Annual HVAC system tune-up included</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Free annual hot water tank maintenance</span>
+                <span className="benefit-text">Annual hot water tank maintenance included</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Three service calls per year with waived service fees</span>
+                <span className="benefit-text">Three service calls per year - service fees waived</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Priority emergency service response</span>
+                <span className="benefit-text">24/7 priority emergency response</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">15% discount on repairs and parts</span>
+                <span className="benefit-text">15% discount on all repairs and parts</span>
               </div>
               <div className="benefit-item">
                 <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Extended equipment warranty protection</span>
+                <span className="benefit-text">Transferable if you sell your home</span>
               </div>
             </div>
             <p className="plan-pitch">
-              Our most comprehensive protection plan covers both your HVAC and hot water systems.
-              With regular professional maintenance, you'll enjoy maximum energy efficiency, longer equipment life,
-              and fewer unexpected repairs. The best value for complete home comfort system protection.
+              Our most comprehensive protection covers all your home comfort systems. Enjoy maximum energy efficiency,
+              extended equipment life, and significant savings on repairs. Members save an average of $600 per year compared to
+              non-members—making this the smart choice for complete peace of mind.
             </p>
           </div>
         </div>
 
         <div className="plans-cta">
-          <p className="cta-text">Ask your technician today about enrolling in a maintenance plan and start saving!</p>
+          <p className="cta-text">Ready to protect your investment? Ask your technician about enrolling today!</p>
         </div>
       </div>
 
