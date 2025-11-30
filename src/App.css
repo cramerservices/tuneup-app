@@ -593,6 +593,69 @@ body {
   line-height: 1.6;
 }
 
+.general-notes-display {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 20px;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.recommendations-section {
+  background: #fefce8;
+}
+
+.section-intro {
+  color: #713f12;
+  font-size: 15px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.recommendation-card {
+  background: white;
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s;
+}
+
+.recommendation-card:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
+.recommendation-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recommendation-title::before {
+  content: '⭐';
+  font-size: 20px;
+}
+
+.recommendation-pitch {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
 .suggestions-list {
   list-style: none;
   display: grid;

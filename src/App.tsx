@@ -20,6 +20,7 @@ interface SummaryData {
   inspectionDate: string
   items: ItemState[]
   selectedSuggestions: string[]
+  generalNotes: string
 }
 
 function App() {
@@ -69,6 +70,7 @@ function App() {
           inspectionDate={summaryData.inspectionDate}
           items={summaryData.items}
           selectedSuggestions={summaryData.selectedSuggestions}
+          generalNotes={summaryData.generalNotes}
           onBack={handleBackToInspection}
           onExportPDF={handleExportPDF}
         />

@@ -1,3 +1,5 @@
+import { getSuggestionPitch } from '../data/suggestionPitches'
+
 interface ItemState {
   itemName: string
   completed: boolean
@@ -12,6 +14,7 @@ interface SummaryReportProps {
   inspectionDate: string
   items: ItemState[]
   selectedSuggestions: string[]
+  generalNotes: string
   onBack: () => void
   onExportPDF: () => void
 }
@@ -23,6 +26,7 @@ export function SummaryReport({
   inspectionDate,
   items,
   selectedSuggestions,
+  generalNotes,
   onBack,
   onExportPDF
 }: SummaryReportProps) {
@@ -102,14 +106,27 @@ export function SummaryReport({
         )}
       </div>
 
-      {selectedSuggestions.length > 0 && (
+      {generalNotes && (
         <div className="summary-section">
-          <h2>Additional Recommendations</h2>
-          <ul className="suggestions-list">
+          <h2>General Notes</h2>
+          <div className="general-notes-display">
+            {generalNotes}
+          </div>
+        </div>
+      )}
+
+      {selectedSuggestions.length > 0 && (
+        <div className="summary-section recommendations-section">
+          <h2>Recommended Upgrades & Improvements</h2>
+          <p className="section-intro">Based on today's inspection, we recommend the following upgrades to enhance your system's performance, efficiency, and reliability:</p>
+          <div className="recommendations-list">
             {selectedSuggestions.map((suggestion, index) => (
-              <li key={index}>{suggestion}</li>
+              <div key={index} className="recommendation-card">
+                <h3 className="recommendation-title">{suggestion}</h3>
+                <p className="recommendation-pitch">{getSuggestionPitch(suggestion)}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
 

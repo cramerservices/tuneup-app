@@ -19,6 +19,7 @@ interface InspectionFormProps {
     inspectionDate: string
     items: ItemState[]
     selectedSuggestions: string[]
+    generalNotes: string
   }) => void
   onBackToServiceSelection: () => void
 }
@@ -117,7 +118,8 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
           technicianName,
           inspectionDate,
           items,
-          selectedSuggestions
+          selectedSuggestions,
+          generalNotes
         })
       }, 1500)
     } catch (error) {
