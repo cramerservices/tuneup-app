@@ -20,9 +20,10 @@ interface InspectionFormProps {
     items: ItemState[]
     selectedSuggestions: string[]
   }) => void
+  onBackToServiceSelection: () => void
 }
 
-export function InspectionFormUpdated({ serviceTypes, onViewSummary }: InspectionFormProps) {
+export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
   const [customerName, setCustomerName] = useState('')
   const [address, setAddress] = useState('')
   const [technicianName, setTechnicianName] = useState('')
@@ -143,6 +144,11 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary }: Inspectio
   return (
     <div className="inspection-form">
       <header className="form-header">
+        <div className="header-top">
+          <button onClick={onBackToServiceSelection} className="back-button">
+            ← Back to Service Selection
+          </button>
+        </div>
         <h1>HVAC Tune-Up Checklist</h1>
         <div className="service-types-display">
           {serviceTypes.map(type => (

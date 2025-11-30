@@ -41,6 +41,10 @@ function App() {
     setCurrentStep('inspection')
   }
 
+  const handleBackToServiceSelection = () => {
+    setCurrentStep('service-selection')
+  }
+
   const handleExportPDF = () => {
     window.print()
   }
@@ -54,6 +58,7 @@ function App() {
         <InspectionFormUpdated
           serviceTypes={selectedServices}
           onViewSummary={handleViewSummary}
+          onBackToServiceSelection={handleBackToServiceSelection}
         />
       )}
       {currentStep === 'summary' && summaryData && (
