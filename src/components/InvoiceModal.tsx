@@ -225,6 +225,7 @@ export function InvoiceModal({
               <div className="invoice-items">
                 {selectedSuggestions.map(suggestion => {
                   const isApproved = approvedSuggestions.find(s => s.suggestion === suggestion)
+                  const suggestionInfo = getSuggestionInfo(suggestion)
                   return (
                     <div key={suggestion} className="invoice-item">
                       <label className="invoice-checkbox-label">
@@ -241,7 +242,7 @@ export function InvoiceModal({
                           value={isApproved.price}
                           onChange={(e) => updateSuggestionPrice(suggestion, parseFloat(e.target.value) || 0)}
                           className="price-input"
-                          placeholder="Price"
+                          placeholder={`$${suggestionInfo.price}`}
                           step="0.01"
                         />
                       )}
