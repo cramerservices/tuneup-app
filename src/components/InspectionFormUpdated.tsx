@@ -108,7 +108,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
           selected_suggestions: selectedSuggestions
         })
         .select()
-        .single()
+        .maybeSingle()
 
       if (inspectionError) throw inspectionError
 
