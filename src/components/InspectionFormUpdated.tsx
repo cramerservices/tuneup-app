@@ -45,6 +45,20 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
   const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const { error } = await supabase.from('inspections').select('count').limit(1)
+        if (error) {
+          console.error('Database connection test failed:', error)
+        }
+      } catch (err) {
+        console.error('Database connection error:', err)
+      }
+    }
+    testConnection()
+  }, [])
+
+  useEffect(() => {
     const initialEquipment = serviceTypes.map(type => ({
       serviceType: type,
       brand: '',
@@ -110,7 +124,14 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
         .select()
         .maybeSingle()
 
-      if (inspectionError) throw inspectionError
+      if (inspectionError) {
+        console.error('Inspection error details:', inspectionError)
+        throw inspectionError
+      }
+
+      if (!inspection) {
+        throw new Error('Failed to create inspection record')
+      }
 
       const itemsToInsert = items.map(item => ({
         inspection_id: inspection.id,
@@ -162,7 +183,8 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
       }, 1500)
     } catch (error) {
       console.error('Error saving inspection:', error)
-      setSaveMessage('Error saving inspection. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setSaveMessage(`Error saving inspection: ${errorMessage}. Please refresh the page and try again.`)
     } finally {
       setSaving(false)
     }
