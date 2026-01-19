@@ -35,17 +35,17 @@ export const hotWaterTankItems: ChecklistItem[] = [
 ]
 
 export const additionalSuggestions: string[] = [
-  'Power Surge Protector - $150',
-  'Smart Thermostat - $150',
-  'Smart Water Monitor And Automatic Water Shut Off Valve - $700',
-  'Smart Air Register Vents - $150',
+  'Power Surge Protector',
+  'Smart Thermostat',
+  'Smart Water Monitor And Automatic Water Shut Off Valve',
+  'Smart Air Register Vents',
   'Air Purifier',
-  'UV Light - $150',
-  'Humidifier - $450',
+  'UV Light',
+  'Humidifier',
   'De Humidifier',
-  'Compressor Blanket - $150',
-  'Hard Start Kit - $100',
-  'Powered Anode Rod - $250'
+  'Compressor Blanket',
+  'Hard Start Kit',
+  'Powered Anode Rod'
 ]
 
 export function getItemsForServices(serviceTypes: string[]): ChecklistItem[] {
