@@ -260,11 +260,14 @@ export function SummaryReport({
                 <div key={index} className="recommendation-card">
                   <div className="recommendation-header">
                     <h3 className="recommendation-title">{suggestion}</h3>
-                    {info.price > 0 && (
-                      <span className="recommendation-price">
-                        {info.priceLabel || `$${info.price}`}
-                      </span>
-                    )}
+                    <span className="recommendation-price">
+  {info.priceLabel?.trim()
+    ? info.priceLabel
+    : typeof info.price === 'number' && info.price > 0
+      ? `$${info.price}`
+      : 'Call for pricing'}
+</span>
+
                   </div>
                   <p className="recommendation-pitch">{info.pitch}</p>
                 </div>
