@@ -481,13 +481,13 @@ export function MaintenancePlansPage() {
               </p>
             </div>
             <PlanBody plan={p} />
-            <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 12 }}>
-              <p style={{ margin: 0, fontSize: 13, color: '#64748b', textAlign: 'center' }}>
-                For more information, call <strong style={{ color: '#1e293b' }}>{phoneDisplay}</strong>
-              </p>
-            </div>
           </div>
         ))}
+        <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 12 }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#64748b', textAlign: 'center' }}>
+            For more information, call <strong style={{ color: '#1e293b' }}>{phoneDisplay}</strong>
+          </p>
+        </div>
       </div>
 
       <div className="summary-section">
