@@ -280,9 +280,7 @@ export function SummaryReport({
 
       <div className="summary-section maintenance-plans-section">
         <h2>Maintenance Membership Plans</h2>
-        <p className="section-intro">
-          Want your home to run smoothly year-round? Join a Maintenance Membership and see what's included.
-        </p>
+        <p className="section-intro">Want your home to run smoothly all year? Join a Maintenance Membership and see what's included.</p>
 
         <div className="plans-cta">
           <a
@@ -332,4 +330,5 @@ export function SummaryReport({
       )}
     </div>
   )
+}
 
