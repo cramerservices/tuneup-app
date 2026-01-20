@@ -50,13 +50,8 @@ function InspectionFlow() {
     setCurrentStep('summary')
   }
 
-  const handleBackToInspection = () => {
-    setCurrentStep('inspection')
-  }
-
-  const handleBackToServiceSelection = () => {
-    setCurrentStep('service-selection')
-  }
+  const handleBackToInspection = () => setCurrentStep('inspection')
+  const handleBackToServiceSelection = () => setCurrentStep('service-selection')
 
   const handleExportPDF = () => {
     window.print()
@@ -98,19 +93,10 @@ export default function App() {
   return (
     <div className="app">
       <Routes>
-        {/* Your existing inspection workflow */}
         <Route path="/" element={<InspectionFlow />} />
-
-        {/* New membership plans page */}
         <Route path="/maintenance-plans" element={<MaintenancePlansPage />} />
-
-        {/* Anything else -> go home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )
 }
-  )
-}
-
-export default App
