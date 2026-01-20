@@ -31,7 +31,7 @@ export const acItems: ChecklistItem[] = [
   { item: 'Clean Condenser', serviceTypes: ['ac'] },
   { item: 'Check refrigerant line insulation', serviceTypes: ['ac'] },
   { item: 'Inspect duct connections for leaks/disconnects (visible areas)', serviceTypes: ['ac'] }
-}
+
 
 ]
 
