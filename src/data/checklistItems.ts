@@ -4,7 +4,7 @@ export interface ChecklistItem {
 }
 
 export const furnaceItems: ChecklistItem[] = [
-  { item: 'Thermostat Check', serviceTypes: ['furnace', 'ac'] },
+  { item: 'Thermostat Check', serviceTypes: ['furnace', 'ac', 'mini_split'] },
   { item: 'Inspect Flame Sensor', serviceTypes: ['furnace'] },
   { item: 'Inspect Electrical Components Of Furnace', serviceTypes: ['furnace'] },
   { item: 'Inspect Flue And Venting', serviceTypes: ['furnace'] },
@@ -13,25 +13,25 @@ export const furnaceItems: ChecklistItem[] = [
   { item: 'Inspect Air Filter', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect And Clean Interior Coil', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspection Of Squirrel Cage', serviceTypes: ['furnace', 'ac'] },
-  { item: 'Inspect Heat Exchanger', serviceTypes: ['ac'] },
-  { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['ac'] }, 
-  { item: 'Test Safety Switches', serviceTypes: ['ac'] },
-  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac'] }
+  { item: 'Inspect Heat Exchanger', serviceTypes: ['furnace'] },
+  { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['furnace'] }, 
+  { item: 'Test Safety Switches', serviceTypes: ['furnace'] },
+ { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] }
 ]
 
 export const acItems: ChecklistItem[] = [
-  { item: 'Thermostat Check', serviceTypes: ['furnace', 'ac'] },
+  { item: 'Thermostat Check', serviceTypes: ['furnace', 'ac', 'mini_split'] },
   { item: 'Inspect Electrical Components Of AC Unit', serviceTypes: ['ac'] },
   { item: 'Inspect Air Filter', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect And Clean Interior Coil', serviceTypes: ['furnace', 'ac'] },
-  { item: 'Check Interior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac'] },
-  { item: 'Check Exterior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac'] },
+  { item: 'Check Interior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Check Exterior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac', 'mini_split'] },
   { item: 'Measure Refrigerant Pressures If Leak Is Suspected', serviceTypes: ['ac'] },
   { item: 'Clear Condensate Pan Of Debris And Flush Drain', serviceTypes: ['ac'] },
-  { item: 'Clean Condenser', serviceTypes: ['ac'] },
-  { item: 'Check Refrigerant Line Insulation', serviceTypes: ['ac'] },
-  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac'] }
-
+  { item: 'Clean Condenser', serviceTypes: ['ac', 'mini_split'] },
+   { item: 'Check Refrigerant Line Insulation', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Inspect Outdoor Fan/Motor', serviceTypes: ['ac', 'mini_split'] }
 
 ]
 
@@ -41,10 +41,27 @@ export const hotWaterTankItems: ChecklistItem[] = [
   { item: 'Inspect Water Connections', serviceTypes: ['hot_water_tank'] },
   { item: 'Inspect Gas/Electrical Components', serviceTypes: ['hot_water_tank'] },
   { item: 'Inspect Water Heater Exhaust', serviceTypes: ['hot_water_tank'] } ,
-  { item: 'Inspect Gas Connect For Leaks (WH)', serviceTypes: ['ac'] },
-  { item: 'Inspect Expansion Tank', serviceTypes: ['ac'] }
+  { item: 'Inspect Gas Connect For Leaks (WH)', serviceTypes: ['hot_water_tank'] },
+  { item: 'Inspect Expansion Tank', serviceTypes: ['hot_water_tank'] }
 ]
 
+export const miniSplitItems: ChecklistItem[] = [
+  { item: 'Thermostat Check', serviceTypes: ['furnace', 'ac', 'mini_split'] },
+  { item: 'Clean/Replace Indoor Filters', serviceTypes: ['mini_split'] },
+  { item: 'Inspect Indoor Coil And Clean If Needed', serviceTypes: ['mini_split'] },
+  { item: 'Inspect Blower Wheel (Clean If Dirty)', serviceTypes: ['mini_split'] },
+
+  { item: 'Inspect Drain Pan And Flush Condensate Line', serviceTypes: ['mini_split'] },
+  { item: 'Test Condensate Pump/Float Switch (If Present)', serviceTypes: ['mini_split'] },
+
+  { item: 'Check Interior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Check Exterior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Check Refrigerant Line Insulation', serviceTypes: ['ac', 'mini_split'] },
+
+  { item: 'Clean Condenser', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Inspect Outdoor Fan/Motor', serviceTypes: ['ac', 'mini_split'] },
+  { item: 'Inspect Electrical Components Of Mini Split', serviceTypes: ['mini_split'] },
+]
 export const additionalSuggestions: string[] = [
   'Power Surge Protector',
   'Smart Thermostat',
@@ -89,6 +106,18 @@ export function getItemsForServices(serviceTypes: string[]): ChecklistItem[] {
   if (serviceTypes.includes('hot_water_tank')) {
     hotWaterTankItems.forEach(item => {
       itemMap.set(item.item, item)
+    })
+  }
+
+    if (serviceTypes.includes('mini_split')) {
+    miniSplitItems.forEach(item => {
+      const existing = itemMap.get(item.item)
+      if (existing) {
+        const combinedServiceTypes = Array.from(new Set([...existing.serviceTypes, ...item.serviceTypes]))
+        itemMap.set(item.item, { ...item, serviceTypes: combinedServiceTypes })
+      } else {
+        itemMap.set(item.item, item)
+      }
     })
   }
 
