@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from "react";
+
 
 type PlanKey = 'bronze' | 'silver' | 'gold' | 'platinum' | 'minisplit'
 
