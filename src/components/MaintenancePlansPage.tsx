@@ -198,65 +198,250 @@ export function MaintenancePlansPage() {
   )
 
   return (
-    <div className="summary-report maintenance-plans-page" style={{ maxWidth: 980, margin: '0 auto' }}>
+    <div className="summary-report maintenance-plans-page" style={{ maxWidth: 1040, margin: '0 auto' }}>
       <style>{`
         @media print {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .plan-page-break {
+            page-break-after: always;
+            break-after: page;
+          }
+          .plan-page-break:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
         }
         .print-only { display: none; }
+
+        .maintenance-plans-page {
+          background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+          min-height: 100vh;
+          padding: 32px 24px;
+        }
+
+        .plans-hero {
+          text-align: center;
+          margin-bottom: 48px;
+        }
+
+        .plans-hero h1 {
+          font-size: 42px;
+          font-weight: 900;
+          color: #1e293b;
+          margin: 0 0 16px 0;
+          letter-spacing: -0.02em;
+        }
+
+        .plans-hero p {
+          font-size: 18px;
+          color: #64748b;
+          max-width: 700px;
+          margin: 0 auto;
+          line-height: 1.6;
+        }
 
         .plans-tabs {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 12px;
+          justify-content: center;
+          gap: 12px;
+          margin: 32px 0;
+          padding: 0 16px;
         }
+
         .tab-btn {
-          border: 1px solid rgba(0,0,0,.12);
-          background: #fff;
-          border-radius: 999px;
-          padding: 10px 14px;
-          font-weight: 800;
+          border: 2px solid #e2e8f0;
+          background: #ffffff;
+          border-radius: 12px;
+          padding: 14px 24px;
+          font-weight: 700;
+          font-size: 15px;
           cursor: pointer;
+          transition: all 0.2s ease;
+          color: #475569;
+          position: relative;
+          overflow: hidden;
         }
+
+        .tab-btn:hover {
+          border-color: #cbd5e1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
         .tab-btn.active {
-          border-color: rgba(0,0,0,.45);
-          box-shadow: 0 0 0 2px rgba(0,0,0,.06);
+          border-color: #0ea5e9;
+          background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+          color: #ffffff;
+          box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
         }
+
+        .tab-btn.active::before {
+          content: '✓ ';
+          font-weight: 900;
+        }
+
         .plans-top-actions {
           display: flex;
-          gap: 10px;
+          gap: 12px;
           flex-wrap: wrap;
-          margin-top: 12px;
+          justify-content: center;
+          margin-top: 24px;
         }
+
+        .plans-top-actions .btn {
+          padding: 14px 28px;
+          font-size: 15px;
+          font-weight: 700;
+          border-radius: 10px;
+          transition: all 0.2s ease;
+        }
+
+        .plans-top-actions .btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
         .plans-callout {
-          margin-top: 14px;
-          padding: 14px;
-          border: 1px dashed rgba(0,0,0,.25);
-          border-radius: 12px;
-          background: rgba(0,0,0,.02);
+          margin-top: 32px;
+          padding: 24px;
+          border: 2px solid #bfdbfe;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .plans-callout strong {
+          color: #1e40af;
+          font-size: 16px;
+        }
+
+        .plans-callout a {
+          color: #1e40af;
+          font-weight: 900;
+          text-decoration: underline;
+        }
+
+        .recommendation-card {
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 32px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          border: 1px solid #e2e8f0;
+          transition: all 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          transform: translateY(-4px);
+        }
+
+        .recommendation-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 16px;
+          border-bottom: 2px solid #e2e8f0;
+        }
+
+        .recommendation-title {
+          font-size: 28px;
+          font-weight: 900;
+          color: #1e293b;
+          letter-spacing: -0.01em;
+        }
+
+        .severity-badge {
+          background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+          color: white;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 800;
+          box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .recommendation-pitch {
+          font-size: 16px;
+          color: #64748b;
+          line-height: 1.6;
+          margin-top: 16px;
+        }
+
+        .equipment-details {
+          margin-top: 24px;
+        }
+
+        .equipment-detail-row {
+          padding: 16px 0;
+          border-bottom: 1px solid #f1f5f9;
+        }
+
+        .equipment-detail-row:last-child {
+          border-bottom: none;
+        }
+
+        .detail-label {
+          font-weight: 800;
+          color: #1e293b;
+          font-size: 15px;
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .detail-value {
+          color: #475569;
+          line-height: 1.7;
+        }
+
+        .detail-value ul {
+          margin: 0;
+          padding-left: 24px;
+        }
+
+        .detail-value li {
+          margin-bottom: 8px;
+          padding-left: 4px;
+        }
+
+        .detail-value li::marker {
+          color: #0ea5e9;
+          font-weight: bold;
+        }
+
+        .plan-page-break {
+          margin-bottom: 24px;
+        }
+
+        @media print {
+          .maintenance-plans-page {
+            background: white;
+            padding: 0;
+          }
+
+          .recommendation-card {
+            box-shadow: none;
+            border: 1px solid #e2e8f0;
+            margin: 0;
+          }
         }
       `}</style>
 
-      <div className="summary-header">
-        <div className="summary-header-top">
-          <div>
-            <h1 style={{ margin: 0 }}>Maintenance Membership Plans</h1>
-            <p className="section-intro" style={{ marginTop: 6 }}>
-              Want your home to run smoothly all year? Join a Maintenance Membership and keep your system performing its best.
-            </p>
-          </div>
-
-          <div className="plans-top-actions no-print">
-            <button className="btn btn-secondary" onClick={handlePrint}>
-              Print / Save as PDF
-            </button>
-            <a className="btn btn-primary" href={`tel:${phoneTel}`}>
-              Call {phoneDisplay}
-            </a>
-          </div>
+      <div className="plans-hero no-print">
+        <h1>Maintenance Membership Plans</h1>
+        <p>
+          Keep your home running smoothly all year with professional maintenance and exclusive member benefits.
+        </p>
+        <div className="plans-top-actions">
+          <button className="btn btn-secondary" onClick={handlePrint}>
+            Print / Save as PDF
+          </button>
+          <a className="btn btn-primary" href={`tel:${phoneTel}`}>
+            Call {phoneDisplay}
+          </a>
         </div>
       </div>
 
@@ -283,12 +468,24 @@ export function MaintenancePlansPage() {
         <PlanBody plan={activePlan} />
       </div>
 
-      {/* Print: show all plans in the same style */}
-      <div className="summary-section print-only">
-        <h2 style={{ marginTop: 0 }}>All Plans</h2>
+      {/* Print: show all plans with page breaks */}
+      <div className="print-only">
         {plans.map((p: Plan) => (
-          <div key={p.key}>
+          <div key={p.key} className="plan-page-break">
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <h1 style={{ fontSize: 32, fontWeight: 900, color: '#1e293b', margin: '0 0 8px 0' }}>
+                Maintenance Membership Plans
+              </h1>
+              <p style={{ color: '#64748b', fontSize: 14 }}>
+                Professional maintenance and exclusive member benefits for your home
+              </p>
+            </div>
             <PlanBody plan={p} />
+            <div style={{ marginTop: 24, padding: 16, background: '#f8fafc', borderRadius: 12 }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#64748b', textAlign: 'center' }}>
+                For more information, call <strong style={{ color: '#1e293b' }}>{phoneDisplay}</strong>
+              </p>
+            </div>
           </div>
         ))}
       </div>
