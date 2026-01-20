@@ -332,5 +332,4 @@ export function SummaryReport({
       )}
     </div>
   )
-}
 
