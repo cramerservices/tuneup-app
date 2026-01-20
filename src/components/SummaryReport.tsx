@@ -279,87 +279,21 @@ export function SummaryReport({
       )}
 
       <div className="summary-section maintenance-plans-section">
-        <h2>Protect Your Investment with a Maintenance Plan</h2>
-        <p className="section-intro">Keep your systems running smoothly year-round and avoid costly emergency repairs. Choose the plan that fits your needs:</p>
-
-        <div className="maintenance-plans-grid">
-          <div className="maintenance-plan-card basic-plan">
-            <div className="plan-header">
-              <h3 className="plan-title">Basic Care Plan</h3>
-              <div className="plan-price">
-                <span className="price-amount">$20</span>
-                <span className="price-period">/month</span>
-              </div>
-            </div>
-            <div className="plan-benefits">
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">One annual system tune-up</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Two service calls per year - service fees waived</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Priority scheduling for your comfort</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Transferable if you sell your home</span>
-              </div>
-            </div>
-            <p className="plan-pitch">
-              Perfect for homeowners who want reliable comfort without surprises. Regular maintenance prevents costly breakdowns
-              and keeps your system running efficiently—often paying for itself through energy savings and avoiding emergency repairs.
-            </p>
-          </div>
-
-          <div className="maintenance-plan-card premium-plan">
-            <div className="plan-badge">Most Popular</div>
-            <div className="plan-header">
-              <h3 className="plan-title">Premium Care Plan</h3>
-              <div className="plan-price">
-                <span className="price-amount">$30</span>
-                <span className="price-period">/month</span>
-              </div>
-            </div>
-            <div className="plan-benefits">
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Annual HVAC system tune-up included</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Annual hot water tank maintenance included</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Three service calls per year - service fees waived</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">24/7 priority emergency response</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">15% discount on all repairs and parts</span>
-              </div>
-              <div className="benefit-item">
-                <span className="benefit-icon">✓</span>
-                <span className="benefit-text">Transferable if you sell your home</span>
-              </div>
-            </div>
-            <p className="plan-pitch">
-              Our most comprehensive protection covers all your home comfort systems. Enjoy maximum energy efficiency,
-              extended equipment life, and significant savings on repairs. Members save an average of $600 per year compared to
-              non-members—making this the smart choice for complete peace of mind.
-            </p>
-          </div>
-        </div>
+        <h2>Maintenance Membership Plans</h2>
+        <p className="section-intro">Prefer a simple link instead of listing prices here? View all plan options and what's included on our Plans page.</p>
 
         <div className="plans-cta">
-          <p className="cta-text">Ready to protect your investment? Ask your technician about enrolling today!</p>
+          <a
+            className="btn btn-primary"
+            href="/maintenance-plans"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View All Plans
+          </a>
+          <p className="cta-text" style={{ marginTop: '12px' }}>
+            If these plans don't match what you need, talk to your technician or call (314) 267-8594 to build a custom plan.
+          </p>
         </div>
       </div>
 
