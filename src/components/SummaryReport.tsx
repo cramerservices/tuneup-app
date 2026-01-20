@@ -280,20 +280,19 @@ export function SummaryReport({
 
       <div className="summary-section maintenance-plans-section">
         <h2>Maintenance Membership Plans</h2>
-        <p className="section-intro">Prefer a simple link instead of listing prices here? View all plan options and what's included on our Plans page.</p>
+        <p className="section-intro">
+          Want your home to run smoothly year-round? Join a Maintenance Membership and see what's included.
+        </p>
 
         <div className="plans-cta">
           <a
             className="btn btn-primary"
-            href="/maintenance-plans"
+            href="#/maintenance-plans"
             target="_blank"
             rel="noreferrer"
           >
             View All Plans
           </a>
-          <p className="cta-text" style={{ marginTop: '12px' }}>
-            If these plans don't match what you need, talk to your technician or call (314) 267-8594 to build a custom plan.
-          </p>
         </div>
       </div>
 
@@ -334,3 +333,4 @@ export function SummaryReport({
     </div>
   )
 }
+
