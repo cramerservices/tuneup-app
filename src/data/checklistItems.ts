@@ -12,11 +12,11 @@ export const furnaceItems: ChecklistItem[] = [
   { item: 'Check Burner Flame', serviceTypes: ['furnace'] },
   { item: 'Inspect Air Filter', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect And Clean Interior Coil', serviceTypes: ['furnace', 'ac'] },
-  { item: 'Inspection And Cleaning Of Squirrel Cage', serviceTypes: ['furnace', 'ac'] },
+  { item: 'Inspection Of Squirrel Cage', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect Heat Exchanger', serviceTypes: ['ac'] },
   { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['ac'] }, 
   { item: 'Test Safety Switches', serviceTypes: ['ac'] },
-  { item: 'Inspect duct connections for leaks/disconnects (visible areas)', serviceTypes: ['ac'] }
+  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac'] }
 ]
 
 export const acItems: ChecklistItem[] = [
@@ -29,8 +29,8 @@ export const acItems: ChecklistItem[] = [
   { item: 'Measure Refrigerant Pressures If Leak Is Suspected', serviceTypes: ['ac'] },
   { item: 'Clear Condensate Pan Of Debris And Flush Drain', serviceTypes: ['ac'] },
   { item: 'Clean Condenser', serviceTypes: ['ac'] },
-  { item: 'Check refrigerant line insulation', serviceTypes: ['ac'] },
-  { item: 'Inspect duct connections for leaks/disconnects (visible areas)', serviceTypes: ['ac'] }
+  { item: 'Check Refrigerant Line Insulation', serviceTypes: ['ac'] },
+  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac'] }
 
 
 ]
@@ -42,7 +42,7 @@ export const hotWaterTankItems: ChecklistItem[] = [
   { item: 'Inspect Gas/Electrical Components', serviceTypes: ['hot_water_tank'] },
   { item: 'Inspect Water Heater Exhaust', serviceTypes: ['hot_water_tank'] } ,
   { item: 'Inspect Gas Connect For Leaks (WH)', serviceTypes: ['ac'] },
-  { item: 'Inspect expansion tank', serviceTypes: ['ac'] }
+  { item: 'Inspect Expansion Tank', serviceTypes: ['ac'] }
 ]
 
 export const additionalSuggestions: string[] = [
