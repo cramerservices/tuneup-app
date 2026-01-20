@@ -2,9 +2,10 @@ import { useState } from 'react'
 
 interface ServiceSelectionProps {
   onServicesSelected: (services: string[]) => void
+  onViewSaved?: () => void
 }
 
-export function ServiceSelection({ onServicesSelected }: ServiceSelectionProps) {
+export function ServiceSelection({ onServicesSelected, onViewSaved }: ServiceSelectionProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
    const services = [
@@ -34,6 +35,15 @@ export function ServiceSelection({ onServicesSelected }: ServiceSelectionProps) 
       <div className="service-selection-header">
         <h1>Select Service Type</h1>
         <p>Choose which services will be performed today</p>
+        {onViewSaved && (
+          <button
+            className="btn btn-secondary"
+            onClick={onViewSaved}
+            style={{ marginTop: '16px' }}
+          >
+            View Saved Inspections
+          </button>
+        )}
       </div>
 
       <div className="service-cards">

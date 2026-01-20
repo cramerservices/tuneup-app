@@ -19,6 +19,7 @@ interface EquipmentInfo {
 
 interface InspectionFormProps {
   serviceTypes: string[]
+  inspectionId?: string
   onViewSummary: (data: {
     customerName: string
     address: string
@@ -32,7 +33,7 @@ interface InspectionFormProps {
   onBackToServiceSelection: () => void
 }
 
-export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
+export function InspectionFormUpdated({ serviceTypes, inspectionId, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
   const [customerName, setCustomerName] = useState('')
   const [address, setAddress] = useState('')
   const [technicianName, setTechnicianName] = useState('')
@@ -43,6 +44,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
   const [equipment, setEquipment] = useState<EquipmentInfo[]>([])
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const testConnection = async () => {
@@ -57,6 +59,71 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
     }
     testConnection()
   }, [])
+
+  useEffect(() => {
+    if (inspectionId) {
+      loadInspection(inspectionId)
+    }
+  }, [inspectionId])
+
+  const loadInspection = async (id: string) => {
+    setLoading(true)
+    try {
+      const { data: inspection, error: inspectionError } = await supabase
+        .from('inspections')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+
+      if (inspectionError) throw inspectionError
+      if (!inspection) throw new Error('Inspection not found')
+
+      setCustomerName(inspection.customer_name || '')
+      setAddress(inspection.address || '')
+      setTechnicianName(inspection.technician_name || '')
+      setInspectionDate(inspection.inspection_date || new Date().toISOString().split('T')[0])
+      setGeneralNotes(inspection.notes || '')
+      setSelectedSuggestions(inspection.selected_suggestions || [])
+
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('inspection_items')
+        .select('*')
+        .eq('inspection_id', id)
+
+      if (itemsError) throw itemsError
+
+      const loadedItems: ItemState[] = (itemsData || []).map(item => ({
+        itemName: item.item_name,
+        completed: item.completed,
+        notes: item.notes || '',
+        severity: item.severity || 0
+      }))
+
+      setItems(loadedItems)
+
+      const { data: equipmentData, error: equipmentError } = await supabase
+        .from('equipment_info')
+        .select('*')
+        .eq('inspection_id', id)
+
+      if (equipmentError) throw equipmentError
+
+      const loadedEquipment: EquipmentInfo[] = (equipmentData || []).map(equip => ({
+        serviceType: equip.service_type,
+        brand: equip.brand || '',
+        modelNumber: equip.model_number || '',
+        serialNumber: equip.serial_number || ''
+      }))
+
+      setEquipment(loadedEquipment)
+
+    } catch (error) {
+      console.error('Error loading inspection:', error)
+      setSaveMessage('Error loading inspection. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const initialEquipment = serviceTypes.map(type => ({
@@ -110,31 +177,56 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
     setSaveMessage('')
 
     try {
-      const { data: inspection, error: inspectionError } = await supabase
-        .from('inspections')
-        .insert({
-          customer_name: customerName,
-          address: address,
-          technician_name: technicianName,
-          inspection_date: inspectionDate,
-          notes: generalNotes,
-          service_types: serviceTypes,
-          selected_suggestions: selectedSuggestions
-        })
-        .select()
-        .maybeSingle()
+      let finalInspectionId = inspectionId
 
-      if (inspectionError) {
-        console.error('Inspection error details:', inspectionError)
-        throw inspectionError
-      }
+      if (inspectionId) {
+        const { error: updateError } = await supabase
+          .from('inspections')
+          .update({
+            customer_name: customerName,
+            address: address,
+            technician_name: technicianName,
+            inspection_date: inspectionDate,
+            notes: generalNotes,
+            service_types: serviceTypes,
+            selected_suggestions: selectedSuggestions,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', inspectionId)
 
-      if (!inspection) {
-        throw new Error('Failed to create inspection record')
+        if (updateError) throw updateError
+
+        await supabase.from('inspection_items').delete().eq('inspection_id', inspectionId)
+        await supabase.from('equipment_info').delete().eq('inspection_id', inspectionId)
+      } else {
+        const { data: inspection, error: inspectionError } = await supabase
+          .from('inspections')
+          .insert({
+            customer_name: customerName,
+            address: address,
+            technician_name: technicianName,
+            inspection_date: inspectionDate,
+            notes: generalNotes,
+            service_types: serviceTypes,
+            selected_suggestions: selectedSuggestions
+          })
+          .select()
+          .maybeSingle()
+
+        if (inspectionError) {
+          console.error('Inspection error details:', inspectionError)
+          throw inspectionError
+        }
+
+        if (!inspection) {
+          throw new Error('Failed to create inspection record')
+        }
+
+        finalInspectionId = inspection.id
       }
 
       const itemsToInsert = items.map(item => ({
-        inspection_id: inspection.id,
+        inspection_id: finalInspectionId,
         category: '',
         item_name: item.itemName,
         completed: item.completed,
@@ -152,7 +244,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
       const equipmentToInsert = equipment
         .filter(equip => equip.brand || equip.modelNumber || equip.serialNumber)
         .map(equip => ({
-          inspection_id: inspection.id,
+          inspection_id: finalInspectionId,
           service_type: equip.serviceType,
           brand: equip.brand,
           model_number: equip.modelNumber,
@@ -167,7 +259,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
         if (equipmentError) throw equipmentError
       }
 
-      setSaveMessage('Inspection saved successfully!')
+      setSaveMessage(inspectionId ? 'Inspection updated successfully!' : 'Inspection saved successfully!')
 
       setTimeout(() => {
         onViewSummary({
@@ -201,6 +293,16 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
       case 'hot_water_tank': return 'Hot Water Tank'
       default: return type
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="inspection-form">
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <h2>Loading inspection...</h2>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -374,7 +476,7 @@ export function InspectionFormUpdated({ serviceTypes, onViewSummary, onBackToSer
           className="btn btn-primary"
           disabled={saving}
         >
-          {saving ? 'Saving...' : 'Save & View Summary'}
+          {saving ? 'Saving...' : inspectionId ? 'Update & View Summary' : 'Save & View Summary'}
         </button>
       </div>
     </div>
