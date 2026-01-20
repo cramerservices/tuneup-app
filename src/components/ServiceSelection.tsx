@@ -7,11 +7,13 @@ interface ServiceSelectionProps {
 export function ServiceSelection({ onServicesSelected }: ServiceSelectionProps) {
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
-  const services = [
+   const services = [
     { id: 'furnace', label: 'Furnace Tune Up', icon: '🔥' },
     { id: 'ac', label: 'AC/Heat Pump', icon: '❄️' },
+    { id: 'mini_split', label: 'Mini Split', icon: '🌀' },
     { id: 'hot_water_tank', label: 'Hot Water Tank', icon: '💧' }
   ]
+
 
   const toggleService = (serviceId: string) => {
     setSelectedServices(prev =>
