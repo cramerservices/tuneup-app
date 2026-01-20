@@ -1,3 +1,4 @@
+import React, { useMemo, useState } from 'react'
 
 type PlanKey = 'bronze' | 'silver' | 'gold' | 'platinum' | 'minisplit'
 
@@ -128,7 +129,7 @@ export function MaintenancePlansPage() {
   )
 
   const [active, setActive] = useState<PlanKey>('gold')
-  const activePlan = plans.find((p) => p.key === active) || plans[0]
+  const activePlan = plans.find((p: Plan) => p.key === active) || plans[0]
 
   const handlePrint = () => window.print()
 
@@ -264,7 +265,7 @@ export function MaintenancePlansPage() {
         </div>
 
         <div className="plans-tabs" role="tablist" aria-label="Membership plan tabs">
-          {plans.map((p) => (
+          {plans.map((p: Plan) => (
             <button
               key={p.key}
               className={`tab-btn ${p.key === active ? 'active' : ''}`}
@@ -284,7 +285,7 @@ export function MaintenancePlansPage() {
       {/* Print: show all plans in the same style */}
       <div className="summary-section print-only">
         <h2 style={{ marginTop: 0 }}>All Plans</h2>
-        {plans.map((p) => (
+        {plans.map((p: Plan) => (
           <div key={p.key}>
             <PlanBody plan={p} />
           </div>
