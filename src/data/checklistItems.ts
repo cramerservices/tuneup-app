@@ -13,7 +13,10 @@ export const furnaceItems: ChecklistItem[] = [
   { item: 'Inspect Air Filter', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect And Clean Interior Coil', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspection And Cleaning Of Squirrel Cage', serviceTypes: ['furnace', 'ac'] },
-  { item: 'Safety Check', serviceTypes: ['furnace'] }
+  { item: 'Inspect Heat Exchanger', serviceTypes: ['ac'] },
+  { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['ac'] }, 
+  { item: 'Test Safety Switches', serviceTypes: ['ac'] },
+  { item: 'Inspect duct connections for leaks/disconnects (visible areas)', serviceTypes: ['ac'] }
 ]
 
 export const acItems: ChecklistItem[] = [
@@ -22,16 +25,24 @@ export const acItems: ChecklistItem[] = [
   { item: 'Inspect Air Filter', serviceTypes: ['furnace', 'ac'] },
   { item: 'Inspect And Clean Interior Coil', serviceTypes: ['furnace', 'ac'] },
   { item: 'Check Interior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac'] },
+  { item: 'Check Exterior Coils And Line Set For Refrigerant Leaks', serviceTypes: ['ac'] },
   { item: 'Measure Refrigerant Pressures If Leak Is Suspected', serviceTypes: ['ac'] },
   { item: 'Clear Condensate Pan Of Debris And Flush Drain', serviceTypes: ['ac'] },
-  { item: 'Safety Check', serviceTypes: ['ac'] }
+  { item: 'Clean Condenser', serviceTypes: ['ac'] },
+  { item: 'Check refrigerant line insulation', serviceTypes: ['ac'] },
+  { item: 'Inspect duct connections for leaks/disconnects (visible areas)', serviceTypes: ['ac'] }
+}
+
 ]
 
 export const hotWaterTankItems: ChecklistItem[] = [
   { item: 'Flush Water Heater', serviceTypes: ['hot_water_tank'] },
-  { item: 'Replace Anode Rod', serviceTypes: ['hot_water_tank'] },
-  { item: 'Inspect Water Connections And Gas/Electrical Components', serviceTypes: ['hot_water_tank'] },
-  { item: 'Safety Check', serviceTypes: ['hot_water_tank'] }
+  { item: 'Inspect Anode Rod', serviceTypes: ['hot_water_tank'] },
+  { item: 'Inspect Water Connections', serviceTypes: ['hot_water_tank'] },
+  { item: 'Inspect Gas/Electrical Components', serviceTypes: ['hot_water_tank'] },
+  { item: 'Inspect Water Heater Exhaust', serviceTypes: ['hot_water_tank'] } ,
+  { item: 'Inspect Gas Connect For Leaks (WH)', serviceTypes: ['ac'] },
+  { item: 'Inspect expansion tank', serviceTypes: ['ac'] }
 ]
 
 export const additionalSuggestions: string[] = [
