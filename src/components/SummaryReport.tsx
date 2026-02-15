@@ -13,7 +13,7 @@ interface InspectionItem {
   checked: boolean
   issueFound: boolean
   notes?: string
-}
+} 
 
 interface SummaryReportProps {
   items: InspectionItem[]
