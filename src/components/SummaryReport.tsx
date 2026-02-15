@@ -1,90 +1,82 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { getSuggestionInfo } from '../data/suggestionPitches'
-import { InvoiceModal, InvoiceData } from './InvoiceModal'
+import { InvoiceModal } from './InvoiceModal'
 import { InvoicePrint } from './InvoicePrint'
 
-interface ItemState {
-  itemName: string
-  completed: boolean
-  notes: string
-  severity: number
-}
+// @ts-ignore - html2pdf.js ships without TS types
+import html2pdf from 'html2pdf.js'
+import { supabase } from '../lib/supabase'
 
-interface EquipmentInfo {
-  serviceType: string
-  brand: string
-  modelNumber: string
-  serialNumber: string
+interface InspectionItem {
+  id: string
+  label: string
+  checked: boolean
+  issueFound: boolean
+  notes?: string
 }
 
 interface SummaryReportProps {
+  items: InspectionItem[]
+  generalNotes: string
+  selectedSuggestions: string[] // Suggestion IDs
+  equipment: Array<{
+    serviceType: 'AC' | 'Furnace'
+    equipmentType?: string
+    brand?: string
+    model?: string
+    serial?: string
+    age?: string
+    notes?: string
+  }>
   customerName: string
+  customerEmail?: string
   address: string
   technicianName: string
   inspectionDate: string
-  items: ItemState[]
-  selectedSuggestions: string[]
-  generalNotes: string
-  equipment: EquipmentInfo[]
   onBack: () => void
   onExportPDF: () => void
 }
 
 export function SummaryReport({
+  items,
+  generalNotes,
+  selectedSuggestions,
+  equipment,
   customerName,
+  customerEmail,
   address,
   technicianName,
   inspectionDate,
-  items,
-  selectedSuggestions,
-  generalNotes,
-  equipment,
   onBack,
   onExportPDF
 }: SummaryReportProps) {
-  const [showFullReport, setShowFullReport] = useState(false)
+  const [showFullReport, setShowFullReport] = useState(true)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
-  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
+  const [invoiceData, setInvoiceData] = useState<any>(null)
   const [showInvoicePrint, setShowInvoicePrint] = useState(false)
 
-  const getServiceTypeLabel = (type: string) => {
-    switch (type) {
-      case 'furnace': return 'Furnace'
-      case 'ac': return 'AC/Heat Pump'
-      case 'hot_water_tank': return 'Hot Water Tank'
-      default: return type
-    }
-  }
-  const getSeverityLabel = (level: number) => {
-    if (level === 0) return 'No Issue'
-    if (level <= 3) return 'Minor'
-    if (level <= 6) return 'Moderate'
-    if (level <= 8) return 'Significant'
-    return 'Critical'
-  }
+  const reportRef = useRef<HTMLDivElement | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
-  const getSeverityColor = (level: number) => {
-    if (level === 0) return '#6b7280'
-    if (level <= 3) return '#f59e0b'
-    if (level <= 6) return '#f97316'
-    if (level <= 8) return '#ef4444'
-    return '#dc2626'
-  }
+  // Get summary statistics
+  const checkedItems = items.filter((item) => item.checked)
+  const itemsWithIssues = items.filter((item) => item.issueFound)
+  const completionPercentage = items.length > 0 ? Math.round((checkedItems.length / items.length) * 100) : 0
 
-  const uncheckedItems = items.filter(item => !item.completed)
-  const itemsWithIssues = uncheckedItems
-    .filter(item => item.severity > 0 || item.notes.trim() !== '')
-    .sort((a, b) => b.severity - a.severity)
-  const completedItems = items.filter(item => item.completed)
+  // Get suggestions info
+  const suggestionDetails = selectedSuggestions.map((id) => getSuggestionInfo(id)).filter(Boolean)
 
-  const handleGenerateInvoice = (data: InvoiceData) => {
-    setInvoiceData(data)
+  // Sort suggestions by priority
+  const sortedSuggestions = [...suggestionDetails].sort((a, b) => {
+    const priorityOrder = { high: 3, medium: 2, low: 1 }
+    return (priorityOrder[b?.priority || 'low'] || 0) - (priorityOrder[a?.priority || 'low'] || 0)
+  })
+
+  const handleGenerateInvoice = (invoiceData: any) => {
+    setInvoiceData(invoiceData)
     setShowInvoiceModal(false)
     setShowInvoicePrint(true)
-
-    setTimeout(() => {
-      window.print()
-    }, 100)
   }
 
   const handleCloseInvoicePrint = () => {
@@ -92,220 +84,240 @@ export function SummaryReport({
     setInvoiceData(null)
   }
 
+  const lookupCustomerIdByEmail = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase()
+    const { data, error } = await supabase.from('portal_customers').select('id').eq('email', cleanEmail).maybeSingle()
+
+    if (error) throw error
+    if (!data?.id) throw new Error('No paid member found with that email.')
+    return data.id as string
+  }
+
+  const generatePdfBlob = async () => {
+    const el = reportRef.current
+    if (!el) throw new Error('Report element not found')
+
+    const opt = {
+      margin: 10,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const worker: any = (html2pdf as any)().set(opt).from(el)
+    const pdf = await worker.toPdf().get('pdf')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blob: Blob = (pdf as any).output('blob')
+    return blob
+  }
+
+  const completeAndUploadToDashboard = async () => {
+    try {
+      setUploadError(null)
+      setUploading(true)
+
+      if (!customerEmail) {
+        throw new Error('Customer email is required to attach this tune-up to the correct dashboard account.')
+      }
+
+      const customerId = await lookupCustomerIdByEmail(customerEmail)
+      const pdfBlob = await generatePdfBlob()
+
+      const safeName = customerName.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)
+      const ts = new Date().toISOString().replace(/[:.]/g, '-')
+      const pdfPath = `${customerId}/tuneups/${inspectionDate}-${safeName}-${ts}.pdf`
+
+      const { error: uploadErr } = await supabase.storage.from('service-docs').upload(pdfPath, pdfBlob, {
+        contentType: 'application/pdf',
+        upsert: true
+      })
+      if (uploadErr) throw uploadErr
+
+      const { error: rpcErr } = await supabase.rpc('finalize_tuneup', {
+        p_customer_id: customerId,
+        p_service_type: 'tuneup',
+        p_service_date: inspectionDate,
+        p_technician_name: technicianName,
+        p_summary: 'Tune-up completed',
+        p_work_completed: items
+          .filter((item) => item.checked || item.issueFound)
+          .map((item) => ({
+            task: item.label,
+            status: item.issueFound ? 'issue' : 'checked',
+            notes: item.notes ?? ''
+          })),
+        p_recommendations: selectedSuggestions,
+        p_pdf_path: pdfPath
+      })
+      if (rpcErr) throw rpcErr
+
+      alert('Saved! This tune-up is now in the customer dashboard service history.')
+    } catch (e: any) {
+      console.error(e)
+      setUploadError(e?.message ?? 'Failed to upload.')
+      alert(e?.message ?? 'Failed to upload.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   if (showInvoicePrint && invoiceData) {
-    return (
-      <div>
-        <div className="no-print">
-          <button onClick={handleCloseInvoicePrint} className="btn btn-secondary" style={{ margin: '20px' }}>
-            ← Back to Summary
-          </button>
-        </div>
-        <InvoicePrint
-          customerName={customerName}
-          address={address}
-          inspectionDate={inspectionDate}
-          technicianName={technicianName}
-          invoiceData={invoiceData}
-        />
-      </div>
-    )
+    return <InvoicePrint invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
   }
 
   return (
     <div className="summary-report" id="summary-report">
-      <div className="summary-header">
-        <div className="summary-header-top">
-          <img src="/CramerLogoText.png" alt="Cramer Services LLC" className="summary-logo" />
-          <div className="summary-contact-info">
-            <div className="contact-item">
-              <strong>Phone:</strong> (314) 267-8594
-            </div>
-            <div className="contact-item">
-              <strong>Email:</strong> cramerservicesllc@gmail.com
-            </div>
+      <div ref={reportRef}>
+        <div className="summary-header">
+          <h1>HVAC Service Summary Report</h1>
+          <div className="customer-info">
+            <p>
+              <strong>Customer:</strong> {customerName}
+            </p>
+            <p>
+              <strong>Address:</strong> {address}
+            </p>
+            <p>
+              <strong>Technician:</strong> {technicianName}
+            </p>
+            <p>
+              <strong>Date:</strong> {inspectionDate}
+            </p>
           </div>
         </div>
-        <h1>Inspection Summary Report</h1>
-        <div className="summary-info">
-          <div className="info-row">
-            <span className="info-label">Customer:</span>
-            <span className="info-value">{customerName || 'N/A'}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Address:</span>
-            <span className="info-value">{address || 'N/A'}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Technician:</span>
-            <span className="info-value">{technicianName || 'N/A'}</span>
-          </div>
-          <div className="info-row">
-            <span className="info-label">Date:</span>
-            <span className="info-value">{inspectionDate}</span>
-          </div>
-        </div>
-      </div>
 
-      {equipment && equipment.length > 0 && (
-        <div className="summary-section equipment-summary">
+        <div className="completion-summary">
+          <div className="completion-stats">
+            <div className="stat-item">
+              <span className="stat-number">{completionPercentage}%</span>
+              <span className="stat-label">Completed</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{checkedItems.length}</span>
+              <span className="stat-label">Tasks Completed</span>
+            </div>
+            <div className="stat-item issues">
+              <span className="stat-number">{itemsWithIssues.length}</span>
+              <span className="stat-label">Issues Found</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="equipment-section">
           <h2>Equipment Information</h2>
-          <div className="equipment-summary-grid">
-            {equipment.map((equip, index) => (
-              <div key={index} className="equipment-summary-card">
-                <h3 className="equipment-summary-title">{getServiceTypeLabel(equip.serviceType)}</h3>
-                <div className="equipment-details">
-                  {equip.brand && (
-                    <div className="equipment-detail-row">
-                      <span className="detail-label">Brand:</span>
-                      <span className="detail-value">{equip.brand}</span>
-                    </div>
-                  )}
-                  {equip.modelNumber && (
-                    <div className="equipment-detail-row">
-                      <span className="detail-label">Model:</span>
-                      <span className="detail-value">{equip.modelNumber}</span>
-                    </div>
-                  )}
-                  {equip.serialNumber && (
-                    <div className="equipment-detail-row">
-                      <span className="detail-label">Serial:</span>
-                      <span className="detail-value">{equip.serialNumber}</span>
-                    </div>
-                  )}
-                  {!equip.brand && !equip.modelNumber && !equip.serialNumber && (
-                    <p className="no-equipment-info">No equipment information provided</p>
-                  )}
-                </div>
+          {equipment.map((eq, idx) => (
+            <div key={idx} className="equipment-card">
+              <h3>{eq.serviceType} System</h3>
+              <div className="equipment-details">
+                {eq.equipmentType && (
+                  <p>
+                    <strong>Type:</strong> {eq.equipmentType}
+                  </p>
+                )}
+                {eq.brand && (
+                  <p>
+                    <strong>Brand:</strong> {eq.brand}
+                  </p>
+                )}
+                {eq.model && (
+                  <p>
+                    <strong>Model:</strong> {eq.model}
+                  </p>
+                )}
+                {eq.serial && (
+                  <p>
+                    <strong>Serial:</strong> {eq.serial}
+                  </p>
+                )}
+                {eq.age && (
+                  <p>
+                    <strong>Age:</strong> {eq.age}
+                  </p>
+                )}
+                {eq.notes && (
+                  <p>
+                    <strong>Notes:</strong> {eq.notes}
+                  </p>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      )}
 
-      <div className="summary-section">
-        <div className="section-header-with-toggle">
-          <h2>Items Requiring Attention</h2>
-          <button
-            onClick={() => setShowFullReport(!showFullReport)}
-            className="toggle-report-btn"
-          >
-            {showFullReport ? 'Show Issues Only' : 'Show Full Report'}
-          </button>
-        </div>
-        {itemsWithIssues.length === 0 ? (
-          <div className="no-issues">
-            <p>All items have been completed with no issues noted.</p>
+        {generalNotes && (
+          <div className="notes-section">
+            <h2>General Notes</h2>
+            <p>{generalNotes}</p>
           </div>
-        ) : (
-          <div className="issues-list">
-            {itemsWithIssues.map((item, index) => (
-              <div key={index} className="issue-item">
-                <div className="issue-header">
-                  <h3 className="issue-title">{item.itemName}</h3>
-                  <span
-                    className="severity-badge"
-                    style={{
-                      backgroundColor: getSeverityColor(item.severity),
-                      color: 'white'
-                    }}
-                  >
-                    {getSeverityLabel(item.severity)} ({item.severity}/10)
+        )}
+
+        {sortedSuggestions.length > 0 && (
+          <div className="suggestions-section">
+            <h2>Recommended Services & Upgrades</h2>
+            {sortedSuggestions.map((suggestion, idx) => (
+              <div key={idx} className={`suggestion-card priority-${suggestion?.priority}`}>
+                <div className="suggestion-header">
+                  <h3>{suggestion?.title}</h3>
+                  <span className={`priority-badge priority-${suggestion?.priority}`}>
+                    {suggestion?.priority?.toUpperCase()} PRIORITY
                   </span>
                 </div>
-                {item.notes && (
-                  <div className="issue-notes">
-                    <strong>Notes:</strong> {item.notes}
-                  </div>
-                )}
+                <p className="suggestion-description">{suggestion?.description}</p>
+                <div className="suggestion-benefits">
+                  <strong>Benefits:</strong>
+                  <p>{suggestion?.benefits}</p>
+                </div>
+                <div className="estimated-cost">
+                  <strong>Estimated Cost:</strong> {suggestion?.estimated_cost}
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
 
-      {showFullReport && completedItems.length > 0 && (
-        <div className="summary-section completed-section">
-          <h2>Completed Items (No Issues)</h2>
-          <div className="completed-list">
-            {completedItems.map((item, index) => (
-              <div key={index} className="completed-item">
-                <div className="completed-check">✓</div>
-                <div className="completed-name">{item.itemName}</div>
-                {item.notes && (
-                  <div className="completed-notes">{item.notes}</div>
-                )}
-              </div>
-            ))}
+        {showFullReport && (
+          <div className="detailed-report">
+            <h2>Detailed Inspection Checklist</h2>
+
+            <div className="checklist-section">
+              <h3>Completed Tasks</h3>
+              {checkedItems.length > 0 ? (
+                <ul className="checklist-items">
+                  {checkedItems.map((item) => (
+                    <li key={item.id} className="checklist-item completed">
+                      <span className="item-label">✓ {item.label}</span>
+                      {item.notes && <span className="item-notes">{item.notes}</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="no-items">No tasks were marked as completed.</p>
+              )}
+            </div>
+
+            <div className="checklist-section issues">
+              <h3>Issues Found</h3>
+              {itemsWithIssues.length > 0 ? (
+                <ul className="checklist-items">
+                  {itemsWithIssues.map((item) => (
+                    <li key={item.id} className="checklist-item issue">
+                      <span className="item-label">⚠ {item.label}</span>
+                      {item.notes && <span className="item-notes">{item.notes}</span>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="no-items">No issues were found during the inspection.</p>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {generalNotes && (
-        <div className="summary-section">
-          <h2>General Notes</h2>
-          <div className="general-notes-display">
-            {generalNotes}
-          </div>
-        </div>
-      )}
-
-      {selectedSuggestions.length > 0 && (
-        <div className="summary-section recommendations-section">
-          <h2>Recommended Upgrades & Improvements</h2>
-          <p className="section-intro">Based on today's inspection, we recommend the following upgrades to enhance your system's performance, efficiency, and reliability:</p>
-          <div className="recommendations-list">
-            {selectedSuggestions.map((suggestion, index) => {
-              const info = getSuggestionInfo(suggestion)
-              return (
-                <div key={index} className="recommendation-card">
-         <div className="recommendation-header">
-  <h3 className="recommendation-title">{suggestion}</h3>
-
-  <span className="recommendation-price">
-    {info.priceLabel?.trim()
-      ? info.priceLabel
-      : info.price > 0
-        ? `$${info.price}`
-        : 'Call for pricing'}
-  </span>
-</div>
-
-                  <p className="recommendation-pitch">{info.pitch}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="summary-section maintenance-plans-section">
-        <h2>Maintenance Membership Plans</h2>
-        <p className="section-intro">Want your home to run smoothly all year? Join a Maintenance Membership and see what's included.</p>
-
-        <div className="plans-cta">
-          <a
-            className="btn btn-primary"
-            href="#/maintenance-plans"
-            target="_blank"
-            rel="noreferrer"
-          >
-            View All Plans
-          </a>
-        </div>
-      </div>
-
-      <div className="summary-stats">
-        <div className="stat-card">
-          <div className="stat-value">{items.filter(i => i.completed).length}</div>
-          <div className="stat-label">Items Completed</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{uncheckedItems.length}</div>
-          <div className="stat-label">Items Not Completed</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{itemsWithIssues.length}</div>
-          <div className="stat-label">Items with Issues</div>
+        <div className="report-toggle">
+          <button onClick={() => setShowFullReport(!showFullReport)} className="btn btn-outline">
+            {showFullReport ? 'Hide Detailed Report' : 'Show Detailed Report'}
+          </button>
         </div>
       </div>
 
@@ -316,19 +328,30 @@ export function SummaryReport({
         <button onClick={() => setShowInvoiceModal(true)} className="btn btn-success">
           Generate Invoice
         </button>
-        <button onClick={onExportPDF} className="btn btn-primary">
+
+        <button
+          onClick={completeAndUploadToDashboard}
+          className="btn btn-primary"
+          disabled={uploading}
+          title="Uploads the PDF into the member dashboard and decreases tuneups remaining by 1"
+        >
+          {uploading ? 'Saving…' : 'Complete & Save to Customer Dashboard'}
+        </button>
+
+        <button onClick={onExportPDF} className="btn btn-secondary">
           Export as PDF
         </button>
       </div>
 
+      {uploadError && (
+        <div style={{ marginTop: 12, color: '#b91c1c', fontSize: 14 }}>
+          {uploadError}
+        </div>
+      )}
+
       {showInvoiceModal && (
-        <InvoiceModal
-          selectedSuggestions={selectedSuggestions}
-          onClose={() => setShowInvoiceModal(false)}
-          onGenerateInvoice={handleGenerateInvoice}
-        />
+        <InvoiceModal customerName={customerName} onClose={() => setShowInvoiceModal(false)} onGenerate={handleGenerateInvoice} />
       )}
     </div>
   )
 }
-
