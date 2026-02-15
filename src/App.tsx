@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 import { ServiceSelection } from './components/ServiceSelection'
 import { InspectionFormUpdated } from './components/InspectionFormUpdated'
@@ -31,12 +33,12 @@ interface SummaryData {
   address: string
   technicianName: string
   inspectionDate: string
+  customerEmail?: string
   items: ItemState[]
   selectedSuggestions: string[]
   generalNotes: string
   equipment: EquipmentInfo[]
 }
-
 
 function SavedInspectionsWrapper() {
   const navigate = useNavigate()
@@ -81,8 +83,97 @@ function InspectionWrapper() {
     setInspectionId(undefined)
   }
 
-  const handleExportPDF = () => {
-    window.print()
+  const handleExportPDF = async () => {
+    try {
+      if (!summaryData) throw new Error('Missing summary data')
+      if (!inspectionId) throw new Error('Missing inspection ID (save the inspection first)')
+
+      // 1) Locate the report DOM (SummaryReport already has id="summary-report")
+      const reportEl = document.getElementById('summary-report')
+      if (!reportEl) throw new Error('Could not find the report element (#summary-report)')
+
+      // 2) Render report -> canvas
+      const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
+      const imgData = canvas.toDataURL('image/png')
+
+      // 3) Canvas -> PDF (A4), supports multi-page
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = 210
+      const pageHeight = 297
+
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      const pdfBlob = pdf.output('blob') as Blob
+
+      // 4) Find the customer's auth UUID (portal_customers.id) so the PDF can be private per-customer
+      let customerId: string | null = null
+
+      // Prefer email if you have it
+      if (summaryData.customerEmail) {
+        const { data, error } = await supabase
+          .from('portal_customers')
+          .select('id')
+          .eq('email', summaryData.customerEmail)
+          .maybeSingle()
+
+        if (error) throw error
+        customerId = data?.id ?? null
+      }
+
+      // Fallback: match by service address (works if your addresses match exactly)
+      if (!customerId) {
+        const { data, error } = await supabase
+          .from('portal_customers')
+          .select('id')
+          .eq('service_address', summaryData.address)
+          .maybeSingle()
+
+        if (error) throw error
+        customerId = data?.id ?? null
+      }
+
+      if (!customerId) {
+        throw new Error(
+          "Couldn't match this tune-up to a customer account. Add customer email to the form (recommended), or make sure the service address matches portal_customers.service_address exactly."
+        )
+      }
+
+      // 5) Upload to private storage bucket
+      const pdfPath = `${customerId}/${inspectionId}.pdf`
+
+      const { error: uploadError } = await supabase.storage
+        .from('service-docs')
+        .upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true })
+
+      if (uploadError) throw uploadError
+
+      // 6) Finalize (creates services_completed row + decrements tune_ups_remaining)
+      const { error: finalizeError } = await supabase.rpc('finalize_tuneup', {
+        p_inspection_id: inspectionId,
+        p_pdf_path: pdfPath
+      })
+
+      if (finalizeError) throw finalizeError
+
+      alert('Done! The tune-up is saved to Service History and the PDF is now available in the customer dashboard.')
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message ?? 'Failed to export + save the PDF')
+    }
   }
 
   return (
@@ -138,18 +229,13 @@ function EditInspectionWrapper() {
         .from('inspections')
         .select('service_types')
         .eq('id', inspectionId)
-        .maybeSingle()
+        .single()
 
       if (error) throw error
-      if (!data) {
-        navigate('/saved')
-        return
-      }
 
-      setServiceTypes(data.service_types || [])
+      setServiceTypes(data?.service_types || [])
     } catch (error) {
       console.error('Error loading inspection:', error)
-      navigate('/saved')
     } finally {
       setLoading(false)
     }
@@ -166,8 +252,87 @@ function EditInspectionWrapper() {
     navigate('/saved')
   }
 
-  const handleExportPDF = () => {
-    window.print()
+  const handleExportPDF = async () => {
+    try {
+      if (!summaryData) throw new Error('Missing summary data')
+      if (!id) throw new Error('Missing inspection ID')
+
+      const reportEl = document.getElementById('summary-report')
+      if (!reportEl) throw new Error('Could not find the report element (#summary-report)')
+
+      const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
+      const imgData = canvas.toDataURL('image/png')
+
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      const pageWidth = 210
+      const pageHeight = 297
+
+      const imgWidth = pageWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      let heightLeft = imgHeight
+      let position = 0
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+
+      const pdfBlob = pdf.output('blob') as Blob
+
+      let customerId: string | null = null
+
+      if (summaryData.customerEmail) {
+        const { data, error } = await supabase
+          .from('portal_customers')
+          .select('id')
+          .eq('email', summaryData.customerEmail)
+          .maybeSingle()
+        if (error) throw error
+        customerId = data?.id ?? null
+      }
+
+      if (!customerId) {
+        const { data, error } = await supabase
+          .from('portal_customers')
+          .select('id')
+          .eq('service_address', summaryData.address)
+          .maybeSingle()
+        if (error) throw error
+        customerId = data?.id ?? null
+      }
+
+      if (!customerId) {
+        throw new Error(
+          "Couldn't match this tune-up to a customer account. Add customer email to the form (recommended), or make sure the service address matches portal_customers.service_address exactly."
+        )
+      }
+
+      const pdfPath = `${customerId}/${id}.pdf`
+
+      const { error: uploadError } = await supabase.storage
+        .from('service-docs')
+        .upload(pdfPath, pdfBlob, { contentType: 'application/pdf', upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { error: finalizeError } = await supabase.rpc('finalize_tuneup', {
+        p_inspection_id: id,
+        p_pdf_path: pdfPath
+      })
+
+      if (finalizeError) throw finalizeError
+
+      alert('Done! The tune-up is saved to Service History and the PDF is now available in the customer dashboard.')
+    } catch (err: any) {
+      console.error(err)
+      alert(err?.message ?? 'Failed to export + save the PDF')
+    }
   }
 
   if (loading) {
