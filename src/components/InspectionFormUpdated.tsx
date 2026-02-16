@@ -18,11 +18,10 @@ interface EquipmentInfo {
 }
 
 interface InspectionFormProps {
-  // Accept both prop names to avoid runtime crashes if the parent uses a different name
+  // Accept either prop name so the app doesn't crash if parent passes selectedServices
   serviceTypes?: string[]
   selectedServices?: string[]
   inspectionId?: string
-  // Support both signatures: onViewSummary(data) and onViewSummary(data, inspectionId)
   onViewSummary: (data: {
     customerName: string
     address: string
@@ -32,25 +31,25 @@ interface InspectionFormProps {
     selectedSuggestions: string[]
     generalNotes: string
     equipment: EquipmentInfo[]
-  }, inspectionId?: string) => void
-  // Accept either callback name from the parent
-  onBackToServiceSelection?: () => void
-  onBack?: () => void
+  }) => void
+  onBackToServiceSelection: () => void
 }
 
-export function InspectionFormUpdated(props: InspectionFormProps) {
-  const {
-    serviceTypes: serviceTypesProp,
-    selectedServices,
-    inspectionId,
-    onViewSummary,
-    onBackToServiceSelection,
-    onBack,
-  } = props
-
-  // Normalize service types to a safe array (prevents `undefined.map(...)` crashes)
+export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selectedServices, inspectionId, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
   const serviceTypes = (serviceTypesProp ?? selectedServices ?? []) as string[]
-  const handleBack = onBackToServiceSelection ?? onBack ?? (() => {})
+  const [customerName, setCustomerName] = useState('')
+  const [address, setAddress] = useState('')
+  const [technicianName, setTechnicianName] = useState('')
+  const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().split('T')[0])
+  const [generalNotes, setGeneralNotes] = useState('')
+  const [items, setItems] = useState<ItemState[]>([])
+  const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
+  const [equipment, setEquipment] = useState<EquipmentInfo[]>([])
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
     const testConnection = async () => {
       try {
         const { error } = await supabase.from('inspections').select('count').limit(1)
@@ -313,7 +312,7 @@ export function InspectionFormUpdated(props: InspectionFormProps) {
     <div className="inspection-form">
       <header className="form-header">
         <div className="header-top">
-          <button onClick={handleBack} className="back-button">
+          <button onClick={onBackToServiceSelection} className="back-button">
             ← Back to Service Selection
           </button>
         </div>
@@ -486,4 +485,3 @@ export function InspectionFormUpdated(props: InspectionFormProps) {
     </div>
   )
 }
-
