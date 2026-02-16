@@ -4,7 +4,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-
+ 
 import { ServiceSelection } from './components/ServiceSelection'
 import * as InspectionFormModule from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
