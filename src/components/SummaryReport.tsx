@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react'
+import type { FC } from 'react'
 import { getSuggestionInfo } from '../data/suggestionPitches'
 import { InvoiceModal } from './InvoiceModal'
 import { InvoicePrint } from './InvoicePrint'
+const InvoiceModalAny = InvoiceModal as unknown as FC<any>
+const InvoicePrintAny = InvoicePrint as unknown as FC<any>
 
 // @ts-ignore - html2pdf.js ships without TS types
 import html2pdf from 'html2pdf.js'
@@ -193,7 +196,7 @@ export function SummaryReport({ data, onBack, onExportPDF, onSendEmail, isSendin
       </div>
 
       {showInvoicePrint && invoiceData && (
-        <InvoicePrint invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
+        <InvoicePrintAny invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
       )}
 
       <div ref={reportRef} className="report-content">
@@ -356,11 +359,12 @@ export function SummaryReport({ data, onBack, onExportPDF, onSendEmail, isSendin
       )}
 
       {showInvoiceModal && (
-        <InvoiceModal
-          customerName={customerName}
-          onClose={() => setShowInvoiceModal(false)}
-          onGenerate={handleGenerateInvoice}
-        />
+     <InvoiceModalAny
+  customerName={customerName}
+  onClose={() => setShowInvoiceModal(false)}
+  onGenerate={handleGenerateInvoice}
+/>
+
       )}
     </div>
   )
