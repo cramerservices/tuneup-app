@@ -27,11 +27,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+     - name: Use Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: 20
+    cache: npm
+
 
       # Fail fast if secrets aren't being injected
       - name: Validate env
