@@ -9,7 +9,7 @@ import { InspectionForm } from './components/InspectionForm'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
-
+ 
 import './App.css'
 import type { FC } from 'react'
 const InspectionForm = InspectionForm as unknown as FC<any>
