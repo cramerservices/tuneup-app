@@ -5,12 +5,14 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 import { ServiceSelection } from './components/ServiceSelection'
-import { InspectionFormUpdated } from './components/InspectionFormUpdated'
+import { InspectionForm } from './components/InspectionForm'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
 
 import './App.css'
+import type { FC } from 'react'
+const InspectionForm = InspectionForm as unknown as FC<any>
 
 type AppStep = 'service-selection' | 'inspection' | 'summary'
 
@@ -282,7 +284,7 @@ function InspectionWrapper() {
       )}
 
       {currentStep === 'inspection' && (
-        <InspectionFormUpdated
+        <InspectionForm
           selectedServices={selectedServices}
           onViewSummary={(data: SummaryData, id?: string) => {
             if (id) setInspectionId(id)
@@ -307,7 +309,6 @@ function InspectionWrapper() {
 }
 
 function InspectionByIdWrapper() {
-  const { inspectionId } = useParams()
   return <Navigate to={`/`} replace />
 }
 
