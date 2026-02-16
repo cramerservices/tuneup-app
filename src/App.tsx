@@ -138,7 +138,6 @@ function TechAuthGate({ children }: { children: React.ReactNode }) {
 }
 
 function InspectionWrapper() {
-  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<AppStep>('service-selection')
   const [selectedServices, setSelectedServices] = useState<string[]>([])
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
