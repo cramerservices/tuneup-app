@@ -18,21 +18,19 @@ interface EquipmentInfo {
 }
 
 interface InspectionFormProps {
-  // Accept either prop name so the app doesn't crash if parent passes selectedServices
-  serviceTypes?: string[]
-  selectedServices?: string[]
   inspectionId?: string
+  onSave?: () => void
   onViewSummary: (data: {
     customerName: string
+    customerEmail?: string
     address: string
     technicianName: string
     inspectionDate: string
-    items: ItemState[]
+    items: InspectionItem[]
     selectedSuggestions: string[]
     generalNotes: string
-    equipment: EquipmentInfo[]
+    equipment: EquipmentInfo
   }) => void
-  onBackToServiceSelection: () => void
 }
 
 export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selectedServices, inspectionId, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
@@ -199,7 +197,7 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       const { data: customerProfile, error: customerLookupError } = await supabase
         .from('profiles')
         .select('id, email')
-        .eq('email', email)
+        .ilike('email', email)
         .limit(1)
         .maybeSingle()
 
@@ -299,6 +297,7 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setTimeout(() => {
         onViewSummary({
           customerName,
+          customerEmail,
           address,
           technicianName,
           inspectionDate,
