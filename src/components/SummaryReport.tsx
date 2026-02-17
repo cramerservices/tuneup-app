@@ -9,7 +9,7 @@ const InvoicePrintAny = InvoicePrint as unknown as FC<any>
 // @ts-ignore - html2pdf.js ships without TS types
 import html2pdf from 'html2pdf.js'
 import { supabase } from '../lib/supabase'
-
+ 
 interface InspectionItem {
   id: string
   label: string
