@@ -300,6 +300,7 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setTimeout(() => {
         onViewSummary({
           customerName,
+        customerEmail,
           address,
           technicianName,
           inspectionDate,
