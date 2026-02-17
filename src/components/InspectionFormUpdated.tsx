@@ -18,19 +18,21 @@ interface EquipmentInfo {
 }
 
 interface InspectionFormProps {
+  // Accept either prop name so the app doesn't crash if parent passes selectedServices
+  serviceTypes?: string[]
+  selectedServices?: string[]
   inspectionId?: string
-  onSave?: () => void
   onViewSummary: (data: {
     customerName: string
-    customerEmail?: string
     address: string
     technicianName: string
     inspectionDate: string
-    items: InspectionItem[]
+    items: ItemState[]
     selectedSuggestions: string[]
     generalNotes: string
-    equipment: EquipmentInfo
+    equipment: EquipmentInfo[]
   }) => void
+  onBackToServiceSelection: () => void
 }
 
 export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selectedServices, inspectionId, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
@@ -194,12 +196,32 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
         throw new Error('Customer email is required to link the inspection to a dashboard user.')
       }
 
-      const { data: customerProfile, error: customerLookupError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .ilike('email', email)
-        .limit(1)
-        .maybeSingle()
+      // Try RPC (recommended) so techs can resolve customer_id even if 'profiles' has strict RLS.
+      // Requires SQL function: public.get_customer_id_by_email(p_email text) returning uuid
+      let customerIdFromRpc: string | null = null
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('get_customer_id_by_email', { p_email: email })
+        if (!rpcErr && rpcData) customerIdFromRpc = rpcData as unknown as string
+      } catch {
+        // ignore; we'll fall back to direct table query
+      }
+
+      let customerProfile: { id: string; email?: string } | null = null
+      let customerLookupError: any = null
+
+      if (!customerIdFromRpc) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .eq('email', email)
+          .limit(1)
+          .maybeSingle()
+
+        customerProfile = data as any
+        customerLookupError = error as any
+      } else {
+        customerProfile = { id: customerIdFromRpc, email }
+      }
 
       if (customerLookupError) throw customerLookupError
       if (!customerProfile?.id) {
@@ -297,7 +319,8 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setTimeout(() => {
         onViewSummary({
           customerName,
-          customerEmail,
+customerEmail: email,
+customerId,
           address,
           technicianName,
           inspectionDate,
