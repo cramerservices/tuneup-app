@@ -109,10 +109,24 @@ export function SummaryReport({ data, onBack, onExportPDF, onSendEmail, isSendin
 
   const lookupCustomerIdByEmail = async (email: string) => {
     const cleanEmail = email.trim().toLowerCase()
-    const { data, error } = await supabase.from('portal_customers').select('id').eq('email', cleanEmail).maybeSingle()
-    if (error) throw error
-    if (!data?.id) throw new Error('No portal customer found with that email.')
-    return data.id as string
+
+    // 1) Preferred: RPC (works even if customer tables have strict RLS)
+    try {
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('get_customer_id_by_email', { p_email: cleanEmail })
+      if (!rpcErr && rpcData) return rpcData as unknown as string
+    } catch {
+      // ignore; fall back to direct table reads
+    }
+
+    // 2) Fallback: try common customer tables
+    const tryTables = ['portal_customers', 'profiles'] as const
+    for (const table of tryTables) {
+      const { data, error } = await supabase.from(table).select('id').eq('email', cleanEmail).maybeSingle()
+      if (error) continue
+      if (data?.id) return data.id as string
+    }
+
+    throw new Error('No customer found with that email.')
   }
 
   const generatePdfBlob = async () => {
