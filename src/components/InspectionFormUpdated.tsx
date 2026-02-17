@@ -39,6 +39,7 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
   const serviceTypes = (serviceTypesProp ?? selectedServices ?? []) as string[]
   const [customerName, setCustomerName] = useState('')
   const [address, setAddress] = useState('')
+  const [customerEmail, setCustomerEmail] = useState('')
   const [technicianName, setTechnicianName] = useState('')
   const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().split('T')[0])
   const [generalNotes, setGeneralNotes] = useState('')
@@ -84,6 +85,15 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setCustomerName(inspection.customer_name || '')
       setAddress(inspection.address || '')
       setTechnicianName(inspection.technician_name || '')
+      // If this inspection is already linked to a customer, prefill their email (nice for editing)
+      if (inspection.customer_id) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', inspection.customer_id)
+          .maybeSingle()
+        if (prof?.email) setCustomerEmail(prof.email)
+      }
       setInspectionDate(inspection.inspection_date || new Date().toISOString().split('T')[0])
       setGeneralNotes(inspection.notes || '')
       setSelectedSuggestions(inspection.selected_suggestions || [])
@@ -180,13 +190,34 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
     setSaveMessage('')
 
     try {
+      // Link this inspection to the correct customer account (Plans dashboard)
+      const email = customerEmail.trim().toLowerCase()
+      if (!email) {
+        throw new Error('Customer email is required to link the inspection to a dashboard user.')
+      }
+
+      const { data: customerProfile, error: customerLookupError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email)
+        .limit(1)
+        .maybeSingle()
+
+      if (customerLookupError) throw customerLookupError
+      if (!customerProfile?.id) {
+        throw new Error(`No customer found for email: ${email}`)
+      }
+
+      const customerId = customerProfile.id
+
       let finalInspectionId = inspectionId
 
       if (inspectionId) {
         const { error: updateError } = await supabase
           .from('inspections')
           .update({
-            customer_name: customerName,
+             customer_id: customerId,
+             customer_name: customerName,
             address: address,
             technician_name: technicianName,
             inspection_date: inspectionDate,
@@ -205,7 +236,8 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
         const { data: inspection, error: inspectionError } = await supabase
           .from('inspections')
           .insert({
-            customer_name: customerName,
+             customer_id: customerId,
+             customer_name: customerName,
             address: address,
             technician_name: technicianName,
             inspection_date: inspectionDate,
@@ -340,6 +372,15 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Enter customer name"
+            />
+          </div>
+          <div className="form-field">
+            <label>Customer Email</label>
+            <input
+              type="email"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
+              placeholder="Enter customer email (for dashboard)"
             />
           </div>
           <div className="form-field">
