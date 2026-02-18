@@ -26,8 +26,8 @@ interface InspectionItem {
 interface EquipmentInfo {
   serviceType: string
   brand: string
-  model: string
-  serial: string
+  modelNumber: string
+  serialNumber: string
   age?: string
   notes?: string
 }
@@ -266,10 +266,10 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                     <strong>Brand:</strong> {eq.brand || '—'}
                   </p>
                   <p>
-                    <strong>Model:</strong> {eq.model || '—'}
+                    <strong>Model #:</strong> {(eq as any).modelNumber || (eq as any).model || '—'}
                   </p>
                   <p>
-                    <strong>Serial:</strong> {eq.serial || '—'}
+                    <strong>Serial:</strong> {(eq as any).serialNumber || (eq as any).serial || '—'}
                   </p>
                   {eq.age && (
                     <p>
