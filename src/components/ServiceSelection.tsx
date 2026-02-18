@@ -1,63 +1,90 @@
-import { useState } from 'react'
+import { useState } from 'react';
+
+type ServiceType = 'furnace' | 'heat_pump' | 'mini_split' | 'hot_water_tank';
+
+const SERVICES: { id: ServiceType; label: string; icon: string }[] = [
+  { id: 'furnace',        label: 'Furnace Tune Up', icon: '🔥' },
+  { id: 'heat_pump',      label: 'AC/Heat Pump',    icon: '❄️' },
+  { id: 'mini_split',     label: 'Mini Split',      icon: '🌀' },
+  { id: 'hot_water_tank', label: 'Hot Water Tank',  icon: '💧' },
+];
 
 interface ServiceSelectionProps {
-  onNext: (services: string[]) => void
-  onViewSaved?: () => void
+  onContinue: (serviceTypes: string[]) => void;
+  onViewSavedInspections: () => void;
 }
 
-export function ServiceSelection({ onNext, onViewSaved }: ServiceSelectionProps) {
-  const [selectedServices, setSelectedServices] = useState<string[]>([])
+export default function ServiceSelection({
+  onContinue,
+  onViewSavedInspections,
+}: ServiceSelectionProps) {
+  const [selected, setSelected] = useState<ServiceType[]>([]);
 
-  const services = [
-    { id: 'furnace', label: 'Furnace Tune Up', icon: '🔥' },
-    { id: 'ac', label: 'AC/Heat Pump', icon: '❄️' },
-    { id: 'mini_split', label: 'Mini Split', icon: '🌀' },
-    { id: 'hot_water_tank', label: 'Hot Water Tank', icon: '💧' },
-  ]
+  const toggle = (id: ServiceType) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
-  const toggleService = (id: string) => {
-    setSelectedServices((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]))
-  }
-
-  const handleContinue = () => {
-    if (selectedServices.length === 0) return
-    onNext(selectedServices)
-  }
+  const canContinue = selected.length > 0;
 
   return (
-    <div className="service-selection-page">
-      <h1>Select Service Type</h1>
+    <div className="service-selection">
+      <div className="service-selection-header">
+        <h1>Select Service Type</h1>
+        <p>Choose what you’re servicing so your checklist matches the job.</p>
 
-      <div className="service-selection-grid">
-        {services.map((svc) => (
+        {/* Saved Inspections button */}
+        <div style={{ marginTop: 16 }}>
           <button
-            key={svc.id}
-            className={`service-card ${selectedServices.includes(svc.id) ? 'selected' : ''}`}
-            onClick={() => toggleService(svc.id)}
             type="button"
+            className="btn btn-secondary"
+            onClick={onViewSavedInspections}
           >
-            <div className="service-card-icon">{svc.icon}</div>
-            <div className="service-card-label">{svc.label}</div>
+            View Saved Inspections
           </button>
-        ))}
+        </div>
+      </div>
+
+      <div className="service-cards">
+        {SERVICES.map((s) => {
+          const isSelected = selected.includes(s.id);
+          return (
+            <div
+              key={s.id}
+              className={`service-card ${isSelected ? 'selected' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => toggle(s.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggle(s.id);
+                }
+              }}
+            >
+              <div className="service-checkbox">
+                {isSelected ? <span className="checkmark">✓</span> : null}
+              </div>
+
+              <div className="service-icon">{s.icon}</div>
+              <div className="service-label">{s.label}</div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="service-selection-footer">
-        {onViewSaved && (
-          <button className="btn btn-secondary" onClick={onViewSaved} type="button">
-            View Saved Inspections
-          </button>
-        )}
-
         <button
-          className="btn btn-primary btn-large"
-          onClick={handleContinue}
-          disabled={selectedServices.length === 0}
           type="button"
+          className="btn btn-primary btn-large"
+          disabled={!canContinue}
+          onClick={() => onContinue(selected)}
         >
           Continue to Inspection
         </button>
       </div>
     </div>
-  )
+  );
 }
+
