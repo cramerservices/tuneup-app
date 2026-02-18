@@ -203,183 +203,243 @@ export function SummaryReport({ data, onBack, onExportPDF, onSendEmail, isSendin
   }
 
   return (
-    <div className="summary-report-page">
+    <div className="summary-report">
       <div className="summary-header">
-        <h1>Tune-Up Summary Report</h1>
-        <p className="completion-status">{completionPercentage}% Complete</p>
+        <div className="summary-header-top">
+          <div>
+            <h1>Tune-Up Summary Report</h1>
+            <p style={{ marginTop: 8, opacity: 0.9 }}>Inspection summary</p>
+          </div>
+
+          <div className="info-row">
+            <div className="info-label">Completion</div>
+            <div className="info-value">{completionPercentage}%</div>
+          </div>
+        </div>
       </div>
 
       {showInvoicePrint && invoiceData && (
         <InvoicePrintAny invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
       )}
 
-      <div ref={reportRef} className="report-content">
-        <div className="report-section">
+      <div ref={reportRef}>
+        {/* Customer Info */}
+        <div className="customer-info">
           <h2>Customer Information</h2>
-          <p>
-            <strong>Name:</strong> {customerName}
-          </p>
-          <p>
-            <strong>Email:</strong> {customerEmail || '—'}
-          </p>
-          <p>
-            <strong>Address:</strong> {address}
-          </p>
-          <p>
-            <strong>Technician:</strong> {technicianName}
-          </p>
-          <p>
-            <strong>Date:</strong> {inspectionDate}
-          </p>
+
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Name</label>
+              <div>{customerName || '—'}</div>
+            </div>
+
+            <div className="form-field">
+              <label>Email</label>
+              <div>{customerEmail || '—'}</div>
+            </div>
+
+            <div className="form-field">
+              <label>Address</label>
+              <div>{address || '—'}</div>
+            </div>
+
+            <div className="form-field">
+              <label>Technician</label>
+              <div>{technicianName || '—'}</div>
+            </div>
+
+            <div className="form-field">
+              <label>Date</label>
+              <div>{inspectionDate || '—'}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="report-section">
+        {/* Equipment */}
+        <div className="equipment-summary summary-section">
           <h2>Equipment</h2>
+
           {equipment.length > 0 ? (
-            <div className="equipment-grid">
+            <div className="equipment-summary-grid">
               {equipment.map((eq: any, idx: number) => (
-                <div key={idx} className="equipment-card">
-                  <p>
-                    <strong>Service Type:</strong> {eq.serviceType || '—'}
-                  </p>
-                  <p>
-                    <strong>Brand:</strong> {eq.brand || '—'}
-                  </p>
-                  <p>
-                    <strong>Model:</strong> {eq.model || '—'}
-                  </p>
-                  <p>
-                    <strong>Serial:</strong> {eq.serial || '—'}
-                  </p>
-                  {eq.age && (
-                    <p>
-                      <strong>Age:</strong> {eq.age}
-                    </p>
-                  )}
-                  {eq.notes && (
-                    <p>
-                      <strong>Notes:</strong> {eq.notes}
-                    </p>
+                <div key={idx} className="equipment-summary-card">
+                  <h3 className="equipment-type-header">Service Type: {eq.serviceType}</h3>
+
+                  <div className="equipment-details">
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Brand</span>
+                      <span className="detail-value">{eq.brand}</span>
+                    </div>
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Model</span>
+                      <span className="detail-value">{eq.model}</span>
+                    </div>
+                    <div className="equipment-detail-row">
+                      <span className="detail-label">Serial</span>
+                      <span className="detail-value">{eq.serial}</span>
+                    </div>
+
+                    {eq.notes && (
+                      <div className="equipment-detail-row" style={{ alignItems: 'flex-start' }}>
+                        <span className="detail-label">Notes</span>
+                        <span className="detail-value">{eq.notes}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="no-equipment-info">No equipment details recorded.</p>
+          )}
+        </div>
+
+        {/* Recommendations */}
+        <div className="recommendations-section summary-section">
+          <h2>Recommendations</h2>
+          <p className="section-intro">These are the recommended improvements based on the inspection.</p>
+
+          {sortedSuggestions.length > 0 ? (
+            <div className="recommendations-list">
+              {sortedSuggestions.map((suggestion: any, idx: number) => (
+                <div key={idx} className="recommendation-card">
+                  <div className="recommendation-header">
+                    <div className="recommendation-title">{suggestion?.title ?? 'Recommendation'}</div>
+                    {suggestion?.price && <div className="recommendation-price">{suggestion.price}</div>}
+                  </div>
+
+                  {suggestion?.description && (
+                    <p className="recommendation-pitch">{suggestion.description}</p>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="no-items">No equipment details recorded.</p>
+            <div className="no-issues">No recommendations selected.</div>
           )}
         </div>
 
-        <div className="report-section">
-          <h2>Recommendations</h2>
-          {sortedSuggestions.length > 0 ? (
-            <ul className="recommendations-list">
-              {sortedSuggestions.map((suggestion: any, idx: number) => (
-                <li key={idx} className="recommendation-item">
-                  <strong>{suggestion?.title ?? 'Recommendation'}</strong>
-                  {suggestion?.description && <p>{suggestion.description}</p>}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="no-items">No recommendations selected.</p>
-          )}
-        </div>
-
-        <div className="report-section">
+        {/* General Notes */}
+        <div className="general-notes-section">
           <h2>General Notes</h2>
-          <p>{generalNotes || 'No additional notes provided.'}</p>
+          <p style={{ lineHeight: 1.7 }}>{generalNotes || 'No notes provided.'}</p>
         </div>
 
-        {showFullReport && (
-          <div className="report-section">
+        {/* Checklist Summary + Toggle */}
+        <div className="checklist-section">
+          <div className="section-header-with-toggle">
             <h2>Inspection Checklist</h2>
+            <button
+              onClick={() => setShowFullReport(!showFullReport)}
+              className="toggle-report-btn"
+              type="button"
+            >
+              {showFullReport ? 'Hide Detailed Report' : 'Show Detailed Report'}
+            </button>
+          </div>
 
-            <div className="checklist-grid">
-              <div className="checklist-column">
-                <h3>Completed Items</h3>
-                {checkedItems.length > 0 ? (
-                  <ul>
-                    {checkedItems.map((item) => (
-                      <li key={item.id}>
-                        {item.label}
-                        {item.notes && <div className="item-notes">{item.notes}</div>}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-items">No items were marked as completed.</p>
-                )}
-              </div>
+          <div className="summary-stats">
+            <div className="stat-card">
+              <div className="stat-number">{items.length}</div>
+              <div className="stat-label">Total Items</div>
+            </div>
 
-              <div className="checklist-column">
-                <h3>Issues Found</h3>
-                {itemsWithIssues.length > 0 ? (
-                  <ul>
-                    {itemsWithIssues.map((item) => (
-                      <li key={item.id}>
-                        {item.label}
-                        {item.notes && <div className="item-notes">{item.notes}</div>}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-items">No issues were found during the inspection.</p>
-                )}
-              </div>
+            <div className="stat-card">
+              <div className="stat-number">{completedItems.length}</div>
+              <div className="stat-label">Completed</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-number">{issueItems.length}</div>
+              <div className="stat-label">Issues Found</div>
+            </div>
+
+            <div className="stat-card">
+              <div className="stat-number">{sortedSuggestions.length}</div>
+              <div className="stat-label">Recommendations</div>
             </div>
           </div>
-        )}
 
-        <div className="report-toggle">
-          <button onClick={() => setShowFullReport(!showFullReport)} className="btn btn-outline">
-            {showFullReport ? 'Hide Detailed Report' : 'Show Detailed Report'}
-          </button>
+          {showFullReport && (
+            <>
+              <h3 style={{ marginBottom: 12 }}>Completed Items</h3>
+              {completedItems.length > 0 ? (
+                <div className="completed-list">
+                  {completedItems.map((item) => (
+                    <div key={item.id} className="completed-item">
+                      <span className="completed-check">✓</span>
+                      <div>
+                        <div className="completed-name">{item.label}</div>
+                        {item.notes && <div className="completed-notes">{item.notes}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-equipment-info">No completed items recorded.</p>
+              )}
+
+              <div style={{ height: 24 }} />
+
+              <h3 style={{ marginBottom: 12 }}>Issues Found</h3>
+              {issueItems.length > 0 ? (
+                <div className="issues-list">
+                  {issueItems.map((item) => (
+                    <div key={item.id} className="issue-item">
+                      <div className="issue-header">
+                        <div className="issue-title">{item.label}</div>
+                        <span
+                          className="severity-badge"
+                          style={{ background: '#fee2e2', color: '#b91c1c' }}
+                        >
+                          Issue
+                        </span>
+                      </div>
+                      {item.notes && <div className="issue-notes">{item.notes}</div>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-issues">No issues were found during the inspection.</div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
       <div className="summary-actions">
-        <button onClick={onBack} className="btn btn-secondary">
+        <button onClick={onBack} className="btn btn-secondary" type="button">
           Back to Inspection
         </button>
 
         {onSendEmail && (
-          <button onClick={onSendEmail} className="btn btn-outline" disabled={Boolean(isSending)}>
+          <button
+            onClick={onSendEmail}
+            className="btn btn-secondary"
+            disabled={Boolean(isSending)}
+            type="button"
+          >
             {isSending ? 'Sending…' : 'Send Email'}
           </button>
         )}
 
-        <button onClick={() => setShowInvoiceModal(true)} className="btn btn-success">
-          Generate Invoice
+        <button onClick={handleExportPDF} className="btn btn-primary" type="button">
+          Export PDF
         </button>
 
-        <button
-          onClick={completeAndUploadToDashboard}
-          className="btn btn-primary"
-          disabled={uploading}
-          title="Uploads the PDF into the member dashboard and decreases tuneups remaining by 1"
-        >
-          {uploading ? 'Saving…' : 'Complete & Save to Customer Dashboard'}
-        </button>
-
-        <button onClick={onExportPDF} className="btn btn-secondary">
-          Export as PDF
+        <button onClick={() => setShowInvoiceModal(true)} className="btn btn-success" type="button">
+          Create Invoice
         </button>
       </div>
 
-      {uploadError && (
-        <div style={{ marginTop: 12, color: '#b91c1c', fontSize: 14 }}>
-          {uploadError}
-        </div>
-      )}
-
       {showInvoiceModal && (
-     <InvoiceModalAny
-  customerName={customerName}
-  onClose={() => setShowInvoiceModal(false)}
-  onGenerate={handleGenerateInvoice}
-/>
-
+        <InvoiceModalAny
+          customerName={customerName}
+          onClose={() => setShowInvoiceModal(false)}
+          onGenerate={handleGenerateInvoice}
+        />
       )}
     </div>
   )
+
 }
