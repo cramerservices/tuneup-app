@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react'
 import type { FC, ReactNode } from 'react'
 
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+
 import { supabase } from './lib/supabase'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
- 
+
 import { ServiceSelection } from './components/ServiceSelection'
 import * as InspectionFormModule from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
-import { Routes, Route, Navigate } from "react-router-dom";
-
-
 
 import './App.css'
-const navigate = useNavigate()
+
 const InspectionForm = ((InspectionFormModule as any).InspectionFormUpdated ??
   (InspectionFormModule as any).default) as FC<any>
 
@@ -25,7 +24,6 @@ interface ItemState {
   checked: boolean
   issueFound: boolean
   notes?: string
-  // legacy fields used by older parts of your app
   itemName: string
   completed: boolean
   severity: number
@@ -53,7 +51,7 @@ interface SummaryData {
 function SavedInspectionsWrapper() {
   const navigate = useNavigate()
 
-  const handleLoadInspection = async (inspectionId: string) => {
+  const handleLoadInspection = (inspectionId: string) => {
     navigate(`/inspection/${inspectionId}`)
   }
 
@@ -153,14 +151,16 @@ function TechAuthGate({ children }: { children: ReactNode }) {
   )
 }
 
-function InspectionWrapper() {
-  const [currentStep, setCurrentStep] = useState<
-    'service-selection' | 'inspection' | 'summary'
-  >('service-selection')
+function InspectionWrapper({ initialInspectionId }: { initialInspectionId?: string }) {
+  const navigate = useNavigate()
+
+  const [currentStep, setCurrentStep] = useState<'service-selection' | 'inspection' | 'summary'>(
+    initialInspectionId ? 'inspection' : 'service-selection'
+  )
 
   const [selectedServices, setSelectedServices] = useState<string[]>([])
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
-  const [inspectionId, setInspectionId] = useState<string | undefined>(undefined)
+  const [inspectionId, setInspectionId] = useState<string | undefined>(initialInspectionId)
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -182,7 +182,6 @@ function InspectionWrapper() {
     try {
       setIsSendingEmail(true)
       setMessage(null)
-      // You likely have your own email logic; leaving as-is
       setMessage('Email sent!')
     } catch (err: any) {
       setMessage(`Email failed: ${err?.message ?? String(err)}`)
@@ -227,30 +226,31 @@ function InspectionWrapper() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app">
       {message && (
         <div style={{ padding: 10, marginBottom: 10, background: '#f3f3f3' }}>
           {message}
         </div>
       )}
 
-     {currentStep === 'service-selection' && (
-  <ServiceSelection
-    onNext={handleServicesSelected}
-    onViewSaved={() => navigate('/saved')}
-  />
-)}
-
+      {currentStep === 'service-selection' && (
+        <ServiceSelection
+          onNext={handleServicesSelected}
+          onViewSaved={() => navigate('/saved')}
+        />
+      )}
 
       {currentStep === 'inspection' && (
         <InspectionForm
           selectedServices={selectedServices}
-          onViewSummary={(data: SummaryData, id?: string) => {
-            if (id) setInspectionId(id)
+          inspectionId={inspectionId}
+          onViewSummary={(data: SummaryData) => {
             handleViewSummary(data)
           }}
-          onBack={() => setCurrentStep('service-selection')}
-          inspectionId={inspectionId}
+          onBackToServiceSelection={() => {
+            setInspectionId(undefined)
+            setCurrentStep('service-selection')
+          }}
         />
       )}
 
@@ -268,21 +268,20 @@ function InspectionWrapper() {
 }
 
 function InspectionByIdWrapper() {
-  return <Navigate to={`/`} replace />
+  const { inspectionId } = useParams()
+  return <InspectionWrapper initialInspectionId={inspectionId} />
 }
 
 export default function App() {
   return (
-    <HashRouter>
-      <TechAuthGate>
-        <Routes>
-          <Route path="/" element={<InspectionWrapper />} />
-          <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
-          <Route path="/saved" element={<SavedInspectionsWrapper />} />
-          <Route path="/plans" element={<MaintenancePlansPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </TechAuthGate>
-    </HashRouter>
+    <TechAuthGate>
+      <Routes>
+        <Route path="/" element={<InspectionWrapper />} />
+        <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
+        <Route path="/saved" element={<SavedInspectionsWrapper />} />
+        <Route path="/plans" element={<MaintenancePlansPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </TechAuthGate>
   )
 }
