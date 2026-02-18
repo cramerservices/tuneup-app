@@ -207,7 +207,7 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
           gap: 8px;
         }
 
-        .btn {
+        .saved-inspections-page .btn {
           flex: 1;
           padding: 12px 16px;
           border-radius: 10px;
@@ -218,33 +218,33 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
           border: none;
         }
 
-        .btn-primary {
+        .saved-inspections-page .btn-primary {
           background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
           color: white;
         }
 
-        .btn-primary:hover {
+        .saved-inspections-page .btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
         }
 
-        .btn-danger {
+        .saved-inspections-page .btn-danger {
           background: #ef4444;
           color: white;
         }
 
-        .btn-danger:hover {
+        .saved-inspections-page .btn-danger:hover {
           background: #dc2626;
           transform: translateY(-2px);
         }
 
-        .btn-danger:disabled {
+        .saved-inspections-page .btn-danger:disabled {
           opacity: 0.5;
           cursor: not-allowed;
           transform: none;
         }
 
-        .btn-success {
+        .saved-inspections-page .btn-success {
           background: #10b981;
           color: white;
           padding: 14px 28px;
@@ -256,7 +256,7 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
           border: none;
         }
 
-        .btn-success:hover {
+        .saved-inspections-page .btn-success:hover {
           background: #059669;
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
