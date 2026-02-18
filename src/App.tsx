@@ -12,7 +12,7 @@ import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
 
 import './App.css'
-
+const navigate = useNavigate()
 const InspectionForm = ((InspectionFormModule as any).InspectionFormUpdated ??
   (InspectionFormModule as any).default) as FC<any>
 
@@ -231,9 +231,13 @@ function InspectionWrapper() {
         </div>
       )}
 
-      {currentStep === 'service-selection' && (
-        <ServiceSelection onNext={handleServicesSelected} />
-      )}
+     {currentStep === 'service-selection' && (
+  <ServiceSelection
+    onNext={handleServicesSelected}
+    onViewSaved={() => navigate('/saved')}
+  />
+)}
+
 
       {currentStep === 'inspection' && (
         <InspectionForm
