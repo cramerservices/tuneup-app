@@ -10,6 +10,7 @@ import * as InspectionFormModule from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
+import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 
 import './App.css'
 const navigate = useNavigate()
@@ -270,15 +271,18 @@ function InspectionByIdWrapper() {
 
 export default function App() {
   return (
-    <TechAuthGate>
-      <Routes>
-        <Route path="/" element={<InspectionWrapper />} />
-        <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
-        <Route path="/saved" element={<SavedInspectionsWrapper />} />
-        <Route path="/plans" element={<MaintenancePlansPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </TechAuthGate>
+    <HashRouter>
+      <TechAuthGate>
+        <Routes>
+          <Route path="/" element={<InspectionWrapper />} />
+          <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
+          <Route path="/saved" element={<SavedInspectionsWrapper />} />
+          <Route path="/plans" element={<MaintenancePlansPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </TechAuthGate>
+    </HashRouter>
   )
 }
+
 
