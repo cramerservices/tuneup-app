@@ -80,11 +80,11 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
     })
   }
 
-  if (loading) {
-      const handleBack = () => {
-    if (window.history.length > 1) window.history.back()
-    else onNewInspection()
+  const handleBack = () => {
+    onNewInspection()
   }
+
+  if (loading) {
 
     return (
       <div className="saved-inspections-page">
@@ -287,11 +287,11 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
   <h1>Saved Inspections</h1>
 
   <div className="header-actions">
-    <button onClick={handleBack} className="btn-primary" type="button">
+    <button onClick={handleBack} className="btn btn-primary" type="button">
       ← Back
     </button>
 
-    <button onClick={onNewInspection} className="btn-success" type="button">
+    <button onClick={onNewInspection} className="btn btn-success" type="button">
       + New Inspection
     </button>
   </div>
@@ -305,7 +305,7 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
         <div className="empty-state">
           <h2>No Saved Inspections</h2>
           <p>Start by creating your first inspection</p>
-          <button onClick={onNewInspection} className="btn-success" style={{ marginTop: 16 }}>
+          <button onClick={onNewInspection} className="btn btn-success" type="button" style={{ marginTop: 16 }}>
             Create New Inspection
           </button>
         </div>
