@@ -81,6 +81,11 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
   }
 
   if (loading) {
+      const handleBack = () => {
+    if (window.history.length > 1) window.history.back()
+    else onNewInspection()
+  }
+
     return (
       <div className="saved-inspections-page">
         <div className="loading-message">Loading inspections...</div>
@@ -269,14 +274,30 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
           padding-top: 12px;
           border-top: 1px solid #f1f5f9;
         }
+        .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
       `}</style>
 
-      <div className="page-header">
-        <h1>Saved Inspections</h1>
-        <button onClick={onNewInspection} className="btn-success">
-          + New Inspection
-        </button>
-      </div>
+<div className="page-header">
+  <h1>Saved Inspections</h1>
+
+  <div className="header-actions">
+    <button onClick={handleBack} className="btn-primary" type="button">
+      ← Back
+    </button>
+
+    <button onClick={onNewInspection} className="btn-success" type="button">
+      + New Inspection
+    </button>
+  </div>
+</div>
+
+
 
       {error && <div className="error-message">{error}</div>}
 
