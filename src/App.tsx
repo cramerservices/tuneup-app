@@ -10,7 +10,8 @@ import * as InspectionFormModule from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
-import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from "react-router-dom";
+
 
 
 import './App.css'
