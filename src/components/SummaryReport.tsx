@@ -203,290 +203,183 @@ export function SummaryReport({ data, onBack, onExportPDF, onSendEmail, isSendin
   }
 
   return (
-
-<div className="summary-container">
-  <div ref={reportRef} id="summary-report" className="summary-report">
-    {/* Header */}
-    <div className="summary-header">
-      <div className="summary-header-top">
-        <img
-          src="/CramerLogoText.png"
-          alt="Cramer Services"
-          className="summary-logo"
-          onError={(e) => {
-            // fallback if logo path differs
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-        <div className="summary-contact-info">
-          <div className="company-name">Cramer Services LLC</div>
-          <div className="company-contact">Phone: (314) 210-4318</div>
-          <div className="company-contact">Email: cramerservicesllc@gmail.com</div>
-          <div className="company-contact">License: #E-XXXXX</div>
-        </div>
+    <div className="summary-report-page">
+      <div className="summary-header">
+        <h1>Tune-Up Summary Report</h1>
+        <p className="completion-status">{completionPercentage}% Complete</p>
       </div>
 
-      <div className="summary-header-content">
-        <h1 className="summary-title">Tune-Up Summary Report</h1>
-
-        <div className="summary-progress">
-          <div className="progress-text">{completionPercentage}% Complete</div>
-          <div className="progress-bar-container">
-            <div
-              className="progress-bar"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Top summary cards */}
-    <div className="summary-info">
-      <div className="info-card">
-        <h2 className="card-title">Customer Information</h2>
-        <div className="info-row">
-          <span className="info-label">Name:</span>
-          <span className="info-value">{customerName || "—"}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Email:</span>
-          <span className="info-value">{customerEmail || "—"}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Address:</span>
-          <span className="info-value">{address || "—"}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Technician:</span>
-          <span className="info-value">{technicianName || "—"}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Date:</span>
-          <span className="info-value">{inspectionDate || "—"}</span>
-        </div>
-      </div>
-
-      <div className="info-card">
-        <h2 className="card-title">Summary</h2>
-        <div className="info-row">
-          <span className="info-label">Service Types:</span>
-          <span className="info-value">
-            {equipment.length
-              ? [...new Set(equipment.map((e: any) => e?.serviceType).filter(Boolean))].join(", ")
-              : "—"}
-          </span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Recommendations:</span>
-          <span className="info-value">{selectedSuggestions.length}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Checklist Items Completed:</span>
-          <span className="info-value">{itemsCompleted.length}</span>
-        </div>
-        <div className="info-row">
-          <span className="info-label">Issues Found:</span>
-          <span className="info-value">{issuesFound.length}</span>
-        </div>
-
-        {saveError && (
-          <div className="alert alert-danger" style={{ marginTop: 12 }}>
-            {saveError}
-          </div>
-        )}
-        {saveSuccess && (
-          <div className="alert alert-success" style={{ marginTop: 12 }}>
-            {saveSuccess}
-          </div>
-        )}
-      </div>
-    </div>
-
-    {/* Equipment */}
-    <div className="summary-section equipment-section">
-      <h2 className="equipment-summary-title">Equipment</h2>
-
-      {equipment.length === 0 ? (
-        <div className="no-data">No equipment information provided.</div>
-      ) : (
-        <div className="equipment-summary-grid">
-          {equipment.map((eq: any, idx: number) => (
-            <div key={`${eq?.serviceType || "equipment"}-${idx}`} className="equipment-summary-card">
-              <div className="equipment-summary-card-header">
-                <span className="equipment-service-type">{eq?.serviceType || "Equipment"}</span>
-              </div>
-
-              <div className="equipment-details">
-                <div className="equipment-detail-row">
-                  <span className="equipment-detail-label">Brand:</span>
-                  <span className="equipment-detail-value">{eq?.brand || "—"}</span>
-                </div>
-                <div className="equipment-detail-row">
-                  <span className="equipment-detail-label">Model:</span>
-                  <span className="equipment-detail-value">{eq?.model || "—"}</span>
-                </div>
-                <div className="equipment-detail-row">
-                  <span className="equipment-detail-label">Serial:</span>
-                  <span className="equipment-detail-value">{eq?.serial || "—"}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-
-    {/* Recommendations */}
-    <div className="summary-section">
-      <h2 className="section-title">Recommendations</h2>
-
-      {selectedSuggestions.length === 0 ? (
-        <div className="no-data">No recommendations selected.</div>
-      ) : (
-        <div className="recommendation-badges">
-          {selectedSuggestions.map((s: string) => {
-            const info = getSuggestionInfo(s);
-            const label = info?.label || s;
-            return (
-              <span key={s} className="recommendation-badge">
-                {label}
-              </span>
-            );
-          })}
-        </div>
-      )}
-    </div>
-
-    {/* General Notes */}
-    <div className="summary-section">
-      <h2 className="section-title">General Notes</h2>
-      {generalNotes?.trim() ? (
-        <div className="notes-box">{generalNotes}</div>
-      ) : (
-        <div className="no-data">No general notes provided.</div>
-      )}
-    </div>
-
-    {/* Checklist + Issues */}
-    <div className="summary-section checklist-section">
-      <div className="section-header-with-toggle">
-        <h2 className="section-title">Inspection Checklist</h2>
-        <button
-          type="button"
-          className="btn btn-link toggle-button"
-          onClick={() => setShowFullReport((v) => !v)}
-        >
-          {showFullReport ? "Hide Detailed Report" : "Show Detailed Report"}
-        </button>
-      </div>
-
-      <div className="checklist-grid">
-        <div className="checklist-column">
-          <h3 className="subsection-title">Completed Items</h3>
-          {itemsCompleted.length === 0 ? (
-            <div className="no-data">No checklist items marked completed.</div>
-          ) : (
-            <ul className="checklist-list">
-              {itemsCompleted.map((item: any, idx: number) => (
-                <li key={`c-${idx}`} className="checklist-item completed">
-                  {typeof item === "string" ? item : item?.name || item?.label || "Item"}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="checklist-column">
-          <h3 className="subsection-title">Issues Found</h3>
-          {issuesFound.length === 0 ? (
-            <div className="no-data">No issues were found during the inspection.</div>
-          ) : (
-            <ul className="issues-list">
-              {issuesFound.map((issue: any, idx: number) => (
-                <li key={`i-${idx}`} className="issue-item">
-                  {issue?.issue || issue?.name || issue?.label || JSON.stringify(issue)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      {showFullReport && (
-  <div className="detailed-report">
-    <h3 className="subsection-title">Detailed Report</h3>
-    <div className="details-box">
-      <div style={{ marginBottom: 10 }}>
-        <strong>All Checklist Items:</strong>
-      </div>
-      <ul className="checklist-list">
-        {(Array.isArray(items) ? items : []).map((it: any, idx: number) => (
-          <li key={`all-${idx}`} className={`checklist-item ${it?.completed ? "completed" : ""}`}>
-            {typeof it === "string" ? it : it?.name || it?.label || "Item"}
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-)}
-    </div>
-  </div>
-
-  {/* Actions */}
-  <div className="summary-actions">
-    <button type="button" className="btn btn-secondary" onClick={onBack}>
-      Back to Inspection
-    </button>
-
-    <button type="button" className="btn btn-light" onClick={handleSendEmail}>
-      Send Email
-    </button>
-
-    <button type="button" className="btn btn-success" onClick={() => setShowInvoiceModal(true)}>
-      Generate Invoice
-    </button>
-
-    <button
-      type="button"
-      className="btn btn-primary"
-      disabled={isSaving}
-      onClick={handleCompleteAndSaveToDashboard}
-      title={!customerEmail ? "Customer email is required to attach to a dashboard account." : undefined}
-    >
-      {isSaving ? "Saving…" : "Complete & Save to Customer Dashboard"}
-    </button>
-
-    <button type="button" className="btn btn-outline" onClick={handleExportPDF}>
-      Export as PDF
-    </button>
-  </div>
-
-  {showInvoiceModal && (
-    <InvoiceModalAny
-      isOpen={showInvoiceModal}
-      onClose={() => setShowInvoiceModal(false)}
-      customerName={customerName}
-      customerAddress={address}
-      inspectionData={{
-        customerName,
-        customerEmail,
-        address,
-        technicianName,
-        inspectionDate,
-        equipment,
-        selectedSuggestions,
-        generalNotes,
-        items,
-      }}
-    />
-  )}
-
-      {showInvoicePrint && (
+      {showInvoicePrint && invoiceData && (
         <InvoicePrintAny invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
       )}
 
-</div>
+      <div ref={reportRef} className="report-content">
+        <div className="report-section">
+          <h2>Customer Information</h2>
+          <p>
+            <strong>Name:</strong> {customerName}
+          </p>
+          <p>
+            <strong>Email:</strong> {customerEmail || '—'}
+          </p>
+          <p>
+            <strong>Address:</strong> {address}
+          </p>
+          <p>
+            <strong>Technician:</strong> {technicianName}
+          </p>
+          <p>
+            <strong>Date:</strong> {inspectionDate}
+          </p>
+        </div>
 
+        <div className="report-section">
+          <h2>Equipment</h2>
+          {equipment.length > 0 ? (
+            <div className="equipment-grid">
+              {equipment.map((eq: any, idx: number) => (
+                <div key={idx} className="equipment-card">
+                  <p>
+                    <strong>Service Type:</strong> {eq.serviceType || '—'}
+                  </p>
+                  <p>
+                    <strong>Brand:</strong> {eq.brand || '—'}
+                  </p>
+                  <p>
+                    <strong>Model:</strong> {eq.model || '—'}
+                  </p>
+                  <p>
+                    <strong>Serial:</strong> {eq.serial || '—'}
+                  </p>
+                  {eq.age && (
+                    <p>
+                      <strong>Age:</strong> {eq.age}
+                    </p>
+                  )}
+                  {eq.notes && (
+                    <p>
+                      <strong>Notes:</strong> {eq.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="no-items">No equipment details recorded.</p>
+          )}
+        </div>
+
+        <div className="report-section">
+          <h2>Recommendations</h2>
+          {sortedSuggestions.length > 0 ? (
+            <ul className="recommendations-list">
+              {sortedSuggestions.map((suggestion: any, idx: number) => (
+                <li key={idx} className="recommendation-item">
+                  <strong>{suggestion?.title ?? 'Recommendation'}</strong>
+                  {suggestion?.description && <p>{suggestion.description}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="no-items">No recommendations selected.</p>
+          )}
+        </div>
+
+        <div className="report-section">
+          <h2>General Notes</h2>
+          <p>{generalNotes || 'No additional notes provided.'}</p>
+        </div>
+
+        {showFullReport && (
+          <div className="report-section">
+            <h2>Inspection Checklist</h2>
+
+            <div className="checklist-grid">
+              <div className="checklist-column">
+                <h3>Completed Items</h3>
+                {checkedItems.length > 0 ? (
+                  <ul>
+                    {checkedItems.map((item) => (
+                      <li key={item.id}>
+                        {item.label}
+                        {item.notes && <div className="item-notes">{item.notes}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-items">No items were marked as completed.</p>
+                )}
+              </div>
+
+              <div className="checklist-column">
+                <h3>Issues Found</h3>
+                {itemsWithIssues.length > 0 ? (
+                  <ul>
+                    {itemsWithIssues.map((item) => (
+                      <li key={item.id}>
+                        {item.label}
+                        {item.notes && <div className="item-notes">{item.notes}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="no-items">No issues were found during the inspection.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="report-toggle">
+          <button onClick={() => setShowFullReport(!showFullReport)} className="btn btn-outline">
+            {showFullReport ? 'Hide Detailed Report' : 'Show Detailed Report'}
+          </button>
+        </div>
+      </div>
+
+      <div className="summary-actions">
+        <button onClick={onBack} className="btn btn-secondary">
+          Back to Inspection
+        </button>
+
+        {onSendEmail && (
+          <button onClick={onSendEmail} className="btn btn-outline" disabled={Boolean(isSending)}>
+            {isSending ? 'Sending…' : 'Send Email'}
+          </button>
+        )}
+
+        <button onClick={() => setShowInvoiceModal(true)} className="btn btn-success">
+          Generate Invoice
+        </button>
+
+        <button
+          onClick={completeAndUploadToDashboard}
+          className="btn btn-primary"
+          disabled={uploading}
+          title="Uploads the PDF into the member dashboard and decreases tuneups remaining by 1"
+        >
+          {uploading ? 'Saving…' : 'Complete & Save to Customer Dashboard'}
+        </button>
+
+        <button onClick={onExportPDF} className="btn btn-secondary">
+          Export as PDF
+        </button>
+      </div>
+
+      {uploadError && (
+        <div style={{ marginTop: 12, color: '#b91c1c', fontSize: 14 }}>
+          {uploadError}
+        </div>
+      )}
+
+      {showInvoiceModal && (
+     <InvoiceModalAny
+  customerName={customerName}
+  onClose={() => setShowInvoiceModal(false)}
+  onGenerate={handleGenerateInvoice}
+/>
+
+      )}
+    </div>
   )
 }
