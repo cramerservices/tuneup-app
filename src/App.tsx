@@ -12,6 +12,7 @@ import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 
+
 import './App.css'
 const navigate = useNavigate()
 const InspectionForm = ((InspectionFormModule as any).InspectionFormUpdated ??
@@ -284,5 +285,3 @@ export default function App() {
     </HashRouter>
   )
 }
-
-
