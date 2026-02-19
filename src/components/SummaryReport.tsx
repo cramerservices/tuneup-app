@@ -103,7 +103,6 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   const itemsWithIssues: InspectionItem[] = items.filter((i) => getSeverity(i) > 0)
 
   const completionPercentage =
- =
     items.length > 0 ? Math.round((checkedItems.length / items.length) * 100) : 0
 
   // Suggestions info
@@ -359,24 +358,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
               </button>
             </div>
 
-            <h3 style={{ marginTop: 0 }}>Completed Items</h3>
-            {checkedItems.length > 0 ? (
-              <div className="completed-list">
-                {checkedItems.map((item: InspectionItem) => (
-                  <div key={item.id} className="completed-item">
-                    <div className="completed-check">✓</div>
-                    <div>
-                      <div className="completed-text">{item.label}</div>
-                      {item.notes && <div className="item-notes">{item.notes}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-issues">No completed items.</div>
-            )}
-
-            <h3 style={{ marginTop: 24 }}>Issues Found</h3>
+            <h3 style={{ marginTop: 0 }}>Issues Found</h3>
             {itemsWithIssues.length > 0 ? (
               <div className="issues-list">
                 {itemsWithIssues.map((item: InspectionItem) => {
@@ -506,3 +488,4 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     </div>
   )
 }
+
