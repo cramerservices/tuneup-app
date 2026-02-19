@@ -80,9 +80,30 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   const equipment: EquipmentInfo[] = Array.isArray(data.equipment) ? data.equipment : []
   const generalNotes = data.generalNotes || ''
 
-  const checkedItems = items.filter((i) => i.checked || i.completed)
-  const itemsWithIssues: InspectionItem[] = items.filter((i) => i.issueFound)
+  const getTitleParts = (item: InspectionItem) => {
+    const primary = (item.label || item.itemName || '').trim()
+    const secondary =
+      item.label && item.itemName && item.label.trim() !== item.itemName.trim()
+        ? item.itemName.trim()
+        : ''
+    return { primary, secondary }
+  }
+
+  const isCompleted = (item: InspectionItem) => Boolean((item as any).checked ?? item.completed)
+
+  const getSeverity = (item: InspectionItem) => {
+    const s = Number((item as any).severity ?? 0)
+    return Number.isFinite(s) ? s : 0
+  }
+
+  const checkedItems: InspectionItem[] = items.filter((i) => isCompleted(i))
+  const incompleteItems: InspectionItem[] = items.filter((i) => !isCompleted(i))
+
+  // A checklist "issue" is any item with severity > 0 (per your rule)
+  const itemsWithIssues: InspectionItem[] = items.filter((i) => getSeverity(i) > 0)
+
   const completionPercentage =
+ =
     items.length > 0 ? Math.round((checkedItems.length / items.length) * 100) : 0
 
   // Suggestions info
@@ -97,8 +118,9 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   })
 
   const severityLabel = (severity: number) => {
-    if (severity >= 3) return 'High'
-    if (severity === 2) return 'Medium'
+    // 0-10 scale
+    if (severity >= 7) return 'High'
+    if (severity >= 4) return 'Medium'
     return 'Low'
   }
 
@@ -357,22 +379,55 @@ export const SummaryReport: FC<SummaryReportProps> = ({
             <h3 style={{ marginTop: 24 }}>Issues Found</h3>
             {itemsWithIssues.length > 0 ? (
               <div className="issues-list">
-                {itemsWithIssues.map((item: InspectionItem) => (
-                  <div key={item.id} className="issue-item">
-                    <div className="issue-header">
-                      <div className="issue-title">{item.label}</div>
-                      <div className={`severity-badge severity-${severityLabel(item.severity).toLowerCase()}`}>
-                        {severityLabel(item.severity)}
+                {itemsWithIssues.map((item: InspectionItem) => {
+                  const { primary, secondary } = getTitleParts(item)
+                  const sev = getSeverity(item)
+                  return (
+                    <div key={item.id} className="issue-item">
+                      <div className="issue-header">
+                        <div className="issue-title">{primary || '—'}</div>
+                        <div className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
+                          Severity {sev}/10
+                        </div>
                       </div>
+
+                      {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+                      {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
                     </div>
-                    {item.notes && <div className="issue-notes">{item.notes}</div>}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="no-issues">No issues were found during the inspection.</div>
             )}
-          </div>
+          
+
+            <h3 style={{ marginTop: 24 }}>Not Completed</h3>
+            {incompleteItems.length > 0 ? (
+              <div className="issues-list">
+                {incompleteItems.map((item: InspectionItem) => {
+                  const { primary, secondary } = getTitleParts(item)
+                  const sev = getSeverity(item)
+                  return (
+                    <div key={item.id} className="issue-item">
+                      <div className="issue-header">
+                        <div className="issue-title">{primary || '—'}</div>
+                        <div className="severity-badge severity-low">Not Completed</div>
+                      </div>
+
+                      {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+                      {sev > 0 ? (
+                        <div className="item-notes"><strong>Severity:</strong> {sev}/10</div>
+                      ) : null}
+                      {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="no-issues">All items were checked off.</div>
+            )}
+</div>
         )}
 
         {!showFullReport && (
