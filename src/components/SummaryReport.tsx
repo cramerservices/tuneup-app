@@ -153,8 +153,20 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     return blob as Blob
   }
 
+  const getInspectionIdFromUrl = (): string => {
+    try {
+      // Hash routing: https://.../#/inspection/<inspectionId>
+      const hash = typeof window !== 'undefined' ? window.location.hash || '' : ''
+      const m = hash.match(/#\/inspection\/([^/?#]+)/)
+      return (m?.[1] || '').trim()
+    } catch {
+      return ''
+    }
+  }
+
   const completeAndUploadToDashboard = async () => {
     try {
+      if (uploading) return
       setUploading(true)
       setUploadError(null)
 
@@ -194,74 +206,31 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       if (uploadErr) throw uploadErr
 
-      // 4) Insert a row linking this PDF to the dashboard.
-      // Your table schema might differ (customer_id vs portal_customer_id vs user_id, etc.).
-      // We'll try a flexible insert and automatically remove unknown columns based on the
-      // PostgREST error message (fixes "column ... does not exist" / PGRST204).
+      // 4) Insert row in service_docs (matches your current DB schema)
+      // Required columns from your screenshot: inspection_id (text, NOT NULL) and report_url (text, NOT NULL)
+      const inspectionId = getInspectionIdFromUrl() || serviceId
 
-      const publicUrl =
-        supabase.storage.from('service-docs').getPublicUrl(filePath).data.publicUrl || filePath
+      const publicUrl = supabase.storage
+        .from('service-docs')
+        .getPublicUrl(filePath)?.data?.publicUrl
 
-      const basePayload: Record<string, any> = {
-        // Customer reference candidates
-        customer_id: customerId,
-        portal_customer_id: customerId,
-        user_id: customerId,
-        owner_id: customerId,
-        customer: customerId,
-
-        // Helpful metadata candidates
-        customer_email: customerEmail,
-        email: customerEmail,
-        customer_name: customerName || null,
-        technician_name: technicianName || null,
-        inspection_id: `${customerId}:${serviceDate}:${serviceId}`,
-        report_url: publicUrl,
-
-        // Core fields we expect to exist in some form
-        service_date: serviceDate,
-        date: serviceDate,
-        service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
-        type: (equipment?.[0]?.serviceType || 'tuneup') as string,
-        storage_path: filePath,
-        file_path: filePath,
-        path: filePath,
+      if (!publicUrl) {
+        throw new Error('Could not generate public URL for the uploaded PDF.')
       }
 
-      // Remove undefined values
-      Object.keys(basePayload).forEach((k) => {
-        if (basePayload[k] === undefined) delete basePayload[k]
+      const { error: insertErr } = await supabase.from('service_docs').insert({
+        inspection_id: inspectionId,
+        customer_id: customerId,
+        customer_name: customerName || null,
+        customer_email: customerEmail || null,
+        technician_name: technicianName || null,
+        report_url: publicUrl,
+        service_date: serviceDate,
+        service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
+        storage_path: filePath,
       })
 
-      const tryInsertWithPruning = async () => {
-        const payload = { ...basePayload }
-
-        for (let attempt = 0; attempt < 8; attempt++) {
-          const { error } = await supabase.from('service_docs').insert([payload as any])
-          if (!error) return
-
-          const msg = String((error as any)?.message || '')
-
-          // Supabase/PostgREST common patterns for unknown columns
-          const m1 = msg.match(/column \"([^\"]+)\"/i)
-          const m2 = msg.match(/Could not find the '([^']+)'/i)
-          const col = (m1 && m1[1]) || (m2 && m2[1])
-
-          if (col && col in payload) {
-            delete payload[col]
-            continue
-          }
-
-          // If we can't auto-fix, surface the real error.
-          throw error
-        }
-
-        throw new Error(
-          'Could not insert into service_docs. Your table likely requires a column we are not providing (NOT NULL).'
-        )
-      }
-
-      await tryInsertWithPruning()
+      if (insertErr) throw insertErr
 
       setUploadError(null)
       alert('Uploaded to customer dashboard ✅')
@@ -548,4 +517,6 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     </div>
   )
 }
+
+
 
