@@ -194,7 +194,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       if (uploadErr) throw uploadErr
 
-      // 4) Insert row in service_reports (if you have this table)
+      // 4) Insert row in service_reports (if you have this table) 
       // If your schema differs, you can remove this block.
       await supabase.from('service_docs').insert({
         customer_id: customerId,
