@@ -189,14 +189,14 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       // 3) Upload to Supabase Storage
       const { error: uploadErr } = await supabase.storage
-        .from('service-reports')
+        .from('service-docs')
         .upload(filePath, blob, { contentType: 'application/pdf', upsert: true })
 
       if (uploadErr) throw uploadErr
 
       // 4) Insert row in service_reports (if you have this table)
       // If your schema differs, you can remove this block.
-      await supabase.from('service_reports').insert({
+      await supabase.from('service-docs').insert({
         customer_id: customerId,
         service_date: serviceDate,
         service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
