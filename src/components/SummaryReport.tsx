@@ -194,14 +194,50 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       if (uploadErr) throw uploadErr
 
-      // 4) Insert row in service_reports (if you have this table) 
-      // If your schema differs, you can remove this block.
-      await supabase.from('service_docs').insert({
-        customer_id: customerId,
-        service_date: serviceDate,
-        service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
-        storage_path: filePath,
-      })
+      // 4) Insert a row that links this PDF to the customer dashboard.
+      // Different projects use different column names. We'll try the most common shape first,
+      // then fall back to an alternate shape if the table schema differs.
+      const primaryInsert = async () => {
+        return await supabase.from('service_docs').insert([
+          {
+            customer_id: customerId,
+            service_date: serviceDate,
+            service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
+            storage_path: filePath,
+          },
+        ])
+      }
+
+      const fallbackInsert = async () => {
+        // If your bucket is public, this will be a usable URL. If it's private, it will still
+        // store the canonical storage path so the dashboard can generate a signed URL later.
+        const publicUrl =
+          supabase.storage.from('service-docs').getPublicUrl(filePath).data.publicUrl ||
+          filePath
+
+        return await supabase.from('service_docs').insert([
+          {
+            inspection_id: `${customerId}:${serviceDate}:${serviceId}`,
+            customer_email: customerEmail,
+            customer_name: customerName || null,
+            technician_name: technicianName || null,
+            report_url: publicUrl,
+            storage_path: filePath,
+            service_date: serviceDate,
+            service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
+          } as any,
+        ] as any)
+      }
+
+      const { error: insertErr1 } = await primaryInsert()
+      if (insertErr1) {
+        // Try alternate column set (handles older schema)
+        const { error: insertErr2 } = await fallbackInsert()
+        if (insertErr2) throw insertErr2
+      }
+
+      setUploadError(null)
+      alert('Uploaded to customer dashboard ✅')
 
       setUploadError(null)
       alert('Uploaded to customer dashboard ✅')
