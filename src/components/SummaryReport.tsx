@@ -196,7 +196,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       // 4) Insert row in service_reports (if you have this table)
       // If your schema differs, you can remove this block.
-      await supabase.from('service-docs').insert({
+      await supabase.from('service_reports').insert({
         customer_id: customerId,
         service_date: serviceDate,
         service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
