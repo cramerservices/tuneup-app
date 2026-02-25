@@ -218,17 +218,19 @@ export const SummaryReport: FC<SummaryReportProps> = ({
         throw new Error('Could not generate public URL for the uploaded PDF.')
       }
 
-      const { error: insertErr } = await supabase.from('services_completed').insert({
-        inspection_id: inspectionId,
-        customer_id: customerId,
-        customer_name: customerName || null,
-        customer_email: customerEmail || null,
-        technician_name: technicianName || null,
-        report_url: publicUrl,
-        service_date: serviceDate,
-        service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
-        storage_path: filePath,
-      })
+   const { error: insertErr } = await supabase.from('service_docs').insert({
+  inspection_id: inspectionId,              // text NOT NULL ✅
+  report_url: publicUrl,                    // text NOT NULL ✅
+
+  customer_id: customerId || null,
+  customer_name: customerName || null,
+  customer_email: customerEmail || null,
+  technician_name: technicianName || null,
+
+  service_date: serviceDate || null,
+  service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
+  storage_path: filePath || null,
+})
 
       if (insertErr) throw insertErr
 
