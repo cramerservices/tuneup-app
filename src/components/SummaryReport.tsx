@@ -201,7 +201,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
       // 3) Upload to Supabase Storage
       const { error: uploadErr } = await supabase.storage
-        .from('service-docs')
+        .from('services_completed')
         .upload(filePath, blob, { contentType: 'application/pdf', upsert: true })
 
       if (uploadErr) throw uploadErr
@@ -211,14 +211,14 @@ export const SummaryReport: FC<SummaryReportProps> = ({
       const inspectionId = getInspectionIdFromUrl() || serviceId
 
       const publicUrl = supabase.storage
-        .from('service-docs')
+        .from('services_completed')
         .getPublicUrl(filePath)?.data?.publicUrl
 
       if (!publicUrl) {
         throw new Error('Could not generate public URL for the uploaded PDF.')
       }
 
-      const { error: insertErr } = await supabase.from('service_docs').insert({
+      const { error: insertErr } = await supabase.from('services_completed').insert({
         inspection_id: inspectionId,
         customer_id: customerId,
         customer_name: customerName || null,
