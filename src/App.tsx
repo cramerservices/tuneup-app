@@ -277,9 +277,12 @@ export default function App() {
     <TechAuthGate>
       <Routes>
         <Route path="/" element={<InspectionWrapper />} />
+        <Route path="/dashboard" element={<SavedInspectionsWrapper />} />
         <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
         <Route path="/saved" element={<SavedInspectionsWrapper />} />
         <Route path="/plans" element={<MaintenancePlansPage />} />
+        <Route path="/dashboard/plans" element={<MaintenancePlansPage />} />
+        <Route path="/maintenance-plans" element={<MaintenancePlansPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </TechAuthGate>
