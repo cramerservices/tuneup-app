@@ -69,6 +69,7 @@ function SavedInspectionsWrapper() {
 
 function TechAuthGate({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
+  const [authBusy, setAuthBusy] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -78,16 +79,34 @@ function TechAuthGate({ children }: { children: ReactNode }) {
     let mounted = true
 
     const init = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!mounted) return
-      setSessionUserId(data.session?.user?.id ?? null)
-      setLoading(false)
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession()
+        if (!mounted) return
+
+        if (sessionError) {
+          setError(sessionError.message)
+          setSessionUserId(null)
+          return
+        }
+
+        setSessionUserId(data.session?.user?.id ?? null)
+      } catch (err: any) {
+        if (!mounted) return
+        setError(err?.message ?? 'Unable to initialize authentication.')
+        setSessionUserId(null)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
+      }
     }
 
     init()
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setError(null)
       setSessionUserId(session?.user?.id ?? null)
+      setLoading(false)
     })
 
     return () => {
@@ -98,12 +117,22 @@ function TechAuthGate({ children }: { children: ReactNode }) {
 
   const signIn = async () => {
     setError(null)
+    setAuthBusy(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) setError(error.message)
+    setAuthBusy(false)
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    setError(null)
+    setAuthBusy(true)
+
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) {
+      setError(error.message)
+    }
+
+    setAuthBusy(false)
   }
 
   if (loading) return <div style={{ padding: 16 }}>Loading…</div>
@@ -129,8 +158,8 @@ function TechAuthGate({ children }: { children: ReactNode }) {
             type="password"
           />
 
-          <button onClick={signIn} style={{ padding: 10 }}>
-            Sign in
+          <button onClick={signIn} disabled={authBusy} style={{ padding: 10 }}>
+            {authBusy ? 'Signing in…' : 'Sign in'}
           </button>
 
           {error && <div style={{ color: 'crimson' }}>{error}</div>}
@@ -142,8 +171,8 @@ function TechAuthGate({ children }: { children: ReactNode }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 10 }}>
-        <button onClick={signOut} style={{ padding: '6px 10px' }}>
-          Sign out
+        <button onClick={signOut} disabled={authBusy} style={{ padding: '6px 10px' }}>
+          {authBusy ? 'Signing out…' : 'Sign out'}
         </button>
       </div>
       {children}
