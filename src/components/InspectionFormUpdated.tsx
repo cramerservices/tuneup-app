@@ -88,12 +88,24 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setTechnicianName(inspection.technician_name || '')
       // If this inspection is already linked to a customer, prefill their email (nice for editing)
       if (inspection.customer_id) {
-        const { data: prof } = await supabase
-          .from('profiles')
+        const { data: customer } = await supabase
+          .from('customers')
           .select('email')
           .eq('id', inspection.customer_id)
           .maybeSingle()
-        if (prof?.email) setCustomerEmail(prof.email)
+
+        if (customer?.email) {
+          setCustomerEmail(customer.email)
+        } else {
+          // Backward compatibility for inspections that stored a profile id.
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', inspection.customer_id)
+            .maybeSingle()
+
+          if (profile?.email) setCustomerEmail(profile.email)
+        }
       }
       setInspectionDate(inspection.inspection_date || new Date().toISOString().split('T')[0])
       setGeneralNotes(inspection.notes || '')
@@ -186,30 +198,125 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
     )
   }
 
+  const normalizeEmail = (value: string) => value.trim().toLowerCase()
+
+  const parseAddressParts = (serviceAddress: string) => {
+    const parts = serviceAddress.split(',').map(part => part.trim()).filter(Boolean)
+    const city = parts.length > 1 ? parts[1] : null
+    const stateZipMatch = (parts[2] || '').match(/^([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/)
+
+    return {
+      city,
+      state: stateZipMatch?.[1] ?? null,
+      zipCode: stateZipMatch?.[2] ?? null
+    }
+  }
+
+  const syncProfileAfterInspection = async () => {
+    const normalizedEmail = normalizeEmail(customerEmail)
+
+    if (!normalizedEmail) {
+      console.log('inspection complete')
+      console.log('customer email found', null)
+      return null
+    }
+
+    console.log('inspection complete')
+    console.log('customer email found', normalizedEmail)
+
+    try {
+      const { data: customersByEmail, error: customersLookupError } = await supabase
+        .from('customers')
+        .select('id, email')
+        .ilike('email', normalizedEmail)
+        .limit(5)
+
+      if (customersLookupError) throw customersLookupError
+
+      const matchedCustomer = (customersByEmail || []).find(
+        row => normalizeEmail(row.email || '') === normalizedEmail
+      )
+
+      console.log('matching customers lookup result', matchedCustomer ?? null)
+
+      const { data: portalCustomersByEmail, error: portalCustomersLookupError } = await supabase
+        .from('portal_customers')
+        .select('id, email')
+        .ilike('email', normalizedEmail)
+        .limit(5)
+
+      if (portalCustomersLookupError) throw portalCustomersLookupError
+
+      const matchedPortalCustomer = (portalCustomersByEmail || []).find(
+        row => normalizeEmail(row.email || '') === normalizedEmail
+      )
+
+      console.log('matching portal_customers lookup result', matchedPortalCustomer ?? null)
+
+      const { city, state, zipCode } = parseAddressParts(address)
+      const { data: syncResult, error: syncError } = await supabase.rpc('sync_profile_by_email', {
+        p_email: normalizedEmail,
+        p_customer_id: matchedCustomer?.id ?? null,
+        p_portal_customer_id: matchedPortalCustomer?.id ?? null,
+        p_full_name: customerName?.trim() || null,
+        p_phone: null,
+        p_service_address: address?.trim() || null,
+        p_city: city,
+        p_state: state,
+        p_zip_code: zipCode
+      })
+
+      if (syncError) {
+        console.error('sync_profile_by_email error', syncError)
+        return {
+          matchedCustomer,
+          matchedPortalCustomer,
+          syncResult: null,
+          syncError
+        }
+      }
+
+      console.log('sync_profile_by_email success result', syncResult)
+
+      return {
+        matchedCustomer,
+        matchedPortalCustomer,
+        syncResult,
+        syncError: null
+      }
+    } catch (error) {
+      console.error('sync_profile_by_email error', error)
+      return {
+        matchedCustomer: null,
+        matchedPortalCustomer: null,
+        syncResult: null,
+        syncError: error
+      }
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setSaveMessage('')
 
     try {
-      // Link this inspection to the correct customer account (Plans dashboard)
-      const email = customerEmail.trim().toLowerCase()
-      if (!email) {
-        throw new Error('Customer email is required to link the inspection to a dashboard user.')
+      const normalizedEmail = normalizeEmail(customerEmail)
+
+      let customerId: string | null = null
+      if (normalizedEmail) {
+        const { data: customersByEmail, error: customerLookupError } = await supabase
+          .from('customers')
+          .select('id, email')
+          .ilike('email', normalizedEmail)
+          .limit(5)
+
+        if (customerLookupError) throw customerLookupError
+
+        const matchedCustomer = (customersByEmail || []).find(
+          row => normalizeEmail(row.email || '') === normalizedEmail
+        )
+        customerId = matchedCustomer?.id ?? null
       }
-
-      const { data: customerProfile, error: customerLookupError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('email', email)
-        .limit(1)
-        .maybeSingle()
-
-      if (customerLookupError) throw customerLookupError
-      if (!customerProfile?.id) {
-        throw new Error(`No customer found for email: ${email}`)
-      }
-
-      const customerId = customerProfile.id
 
       let finalInspectionId = inspectionId
 
@@ -294,6 +401,8 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
 
         if (equipmentError) throw equipmentError
       }
+
+      await syncProfileAfterInspection()
 
       setSaveMessage(inspectionId ? 'Inspection updated successfully!' : 'Inspection saved successfully!')
 
