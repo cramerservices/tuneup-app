@@ -529,13 +529,13 @@ const completeAndUploadToDashboard = async () => {
         </div>
       )}
 
-      {showInvoiceModal && (
-        <InvoiceModalAny
-          customerName={customerName}
-          onClose={() => setShowInvoiceModal(false)}
-          onGenerate={handleGenerateInvoice}
-        />
-      )}
+    {showInvoiceModal && (
+  <InvoiceModalAny
+    selectedSuggestions={selectedSuggestions}
+    onClose={() => setShowInvoiceModal(false)}
+    onGenerateInvoice={handleGenerateInvoice}
+  />
+)}
     </div>
   )
 }
