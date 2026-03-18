@@ -123,11 +123,50 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     return 'Low'
   }
 
-  const handleGenerateInvoice = (generated: any) => {
+ const handleGenerateInvoice = async (generated: any) => {
+  try {
     setInvoiceData(generated)
     setShowInvoiceModal(false)
     setShowInvoicePrint(true)
+
+    const lineItems = buildCrmInvoiceLineItems(generated)
+
+    if (!customerEmail) {
+      throw new Error('Customer email is required to create a CRM invoice.')
+    }
+
+    if (lineItems.length === 0) {
+      throw new Error('Add at least one invoice line item before generating.')
+    }
+
+    const { data: invoiceResult, error: invoiceError } = await supabase.rpc(
+      'create_crm_invoice_from_tuneup',
+      {
+        p_email: customerEmail,
+        p_full_name: customerName || null,
+        p_phone: null,
+        p_service_address: address || null,
+        p_city: null,
+        p_state: null,
+        p_zip_code: null,
+        p_invoice_date: inspectionDate || new Date().toISOString().slice(0, 10),
+        p_due_date: inspectionDate || new Date().toISOString().slice(0, 10),
+        p_work_completed_date: inspectionDate || new Date().toISOString().slice(0, 10),
+        p_tech_name: technicianName || null,
+        p_notes: generalNotes || null,
+        p_line_items: lineItems,
+      }
+    )
+
+    if (invoiceError) throw invoiceError
+
+    console.log('CRM invoice created', invoiceResult)
+    alert(`CRM invoice created ✅ ${invoiceResult?.invoice_number || ''}`)
+  } catch (err: any) {
+    console.error('Failed to create CRM invoice:', err)
+    alert(err?.message || 'Failed to create CRM invoice')
   }
+}
 
   const handleCloseInvoicePrint = () => {
     setShowInvoicePrint(false)
@@ -163,7 +202,65 @@ export const SummaryReport: FC<SummaryReportProps> = ({
       return ''
     }
   }
+const buildCrmInvoiceLineItems = (invoiceData: any) => {
+  const items: Array<{
+    description: string
+    material_cost: number
+    labor_cost: number
+    total_cost: number
+  }> = []
 
+  if (invoiceData?.services?.furnace) {
+    items.push({
+      description: 'Furnace Tune-Up',
+      material_cost: 0,
+      labor_cost: Number(invoiceData.services.furnacePrice || 0),
+      total_cost: Number(invoiceData.services.furnacePrice || 0),
+    })
+  }
+
+  if (invoiceData?.services?.ac) {
+    items.push({
+      description: 'AC/Heat Pump Service',
+      material_cost: 0,
+      labor_cost: Number(invoiceData.services.acPrice || 0),
+      total_cost: Number(invoiceData.services.acPrice || 0),
+    })
+  }
+
+  if (invoiceData?.services?.hot_water_tank) {
+    items.push({
+      description: 'Hot Water Tank Service',
+      material_cost: 0,
+      labor_cost: Number(invoiceData.services.hotWaterPrice || 0),
+      total_cost: Number(invoiceData.services.hotWaterPrice || 0),
+    })
+  }
+
+  for (const suggestion of invoiceData?.approvedSuggestions || []) {
+    items.push({
+      description: suggestion.suggestion,
+      material_cost: 0,
+      labor_cost: Number(suggestion.price || 0),
+      total_cost: Number(suggestion.price || 0),
+    })
+  }
+
+  for (const work of invoiceData?.additionalWork || []) {
+    if ((work?.description || '').trim() || Number(work?.price || 0) > 0) {
+      items.push({
+        description: (work.description || 'Additional Work').trim(),
+        material_cost: 0,
+        labor_cost: Number(work.price || 0),
+        total_cost: Number(work.price || 0),
+      })
+    }
+  }
+
+  return items
+}
+
+  
 const completeAndUploadToDashboard = async () => {
   try {
     if (uploading) return
@@ -274,9 +371,17 @@ const completeAndUploadToDashboard = async () => {
         </div>
       </div>
 
-      {showInvoicePrint && invoiceData && (
-        <InvoicePrintAny invoiceData={invoiceData} onClose={handleCloseInvoicePrint} />
-      )}
+    {showInvoicePrint && invoiceData && (
+  <InvoicePrintAny
+    customerName={customerName}
+    address={address}
+    inspectionDate={inspectionDate}
+    technicianName={technicianName}
+    invoiceData={invoiceData}
+  />
+)}
+
+  
 
       {/* Everything inside this ref is what gets turned into the PDF */}
       <div ref={reportRef}>
@@ -529,7 +634,7 @@ const completeAndUploadToDashboard = async () => {
         </div>
       )}
 
-    {showInvoiceModal && (
+  {showInvoiceModal && (
   <InvoiceModalAny
     selectedSuggestions={selectedSuggestions}
     onClose={() => setShowInvoiceModal(false)}
