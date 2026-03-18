@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -1250,6 +1255,16 @@ body {
 .description-input:focus {
   outline: none;
   border-color: #3b82f6;
+}
+
+@media (max-width: 768px) {
+  .form-field input,
+  .notes-textarea,
+  .general-notes-textarea,
+  .price-input,
+  .description-input {
+    font-size: 16px;
+  }
 }
 
 .remove-btn {
