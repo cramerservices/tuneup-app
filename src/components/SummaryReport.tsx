@@ -168,9 +168,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   }
 }
 
-  const handleCloseInvoicePrint = () => {
-    setShowInvoicePrint(false)
-  }
+
 
   const generatePdfBlob = async (): Promise<Blob> => {
     if (!reportRef.current) throw new Error('Report not ready')
@@ -371,13 +369,14 @@ const completeAndUploadToDashboard = async () => {
         </div>
       </div>
 
-    {showInvoicePrint && invoiceData && (
+   {showInvoicePrint && invoiceData && (
   <InvoicePrintAny
     customerName={customerName}
     address={address}
     inspectionDate={inspectionDate}
     technicianName={technicianName}
     invoiceData={invoiceData}
+    onClose={handleCloseInvoicePrint}
   />
 )}
 
