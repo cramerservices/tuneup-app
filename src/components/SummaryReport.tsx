@@ -369,14 +369,13 @@ const completeAndUploadToDashboard = async () => {
         </div>
       </div>
 
-   {showInvoicePrint && invoiceData && (
+{showInvoicePrint && invoiceData && (
   <InvoicePrintAny
     customerName={customerName}
     address={address}
     inspectionDate={inspectionDate}
     technicianName={technicianName}
     invoiceData={invoiceData}
-    onClose={handleCloseInvoicePrint}
   />
 )}
 
