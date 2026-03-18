@@ -164,84 +164,104 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     }
   }
 
-  const completeAndUploadToDashboard = async () => {
-    try {
-      if (uploading) return
-      setUploading(true)
-      setUploadError(null)
+const completeAndUploadToDashboard = async () => {
+  try {
+    if (uploading) return
+    setUploading(true)
+    setUploadError(null)
 
-      if (!customerEmail) {
-        throw new Error(
-          'Customer email is required to attach this tune-up to the correct dashboard account.'
-        )
-      }
-
-      // 1) Generate PDF blob
-      const blob = await generatePdfBlob()
-
-      // 2) Find the portal customer by email
-      const { data: customerRow, error: customerErr } = await supabase
-        .from('portal_customers')
-        .select('id')
-        .eq('email', customerEmail)
-        .maybeSingle()
-
-      if (customerErr) throw customerErr
-      if (!customerRow?.id) {
-        throw new Error(
-          'No dashboard account found for this email. Ask the customer to sign up first.'
-        )
-      }
-
-      const customerId = customerRow.id as string
-      const serviceDate = inspectionDate || new Date().toISOString().slice(0, 10)
-      const serviceId = crypto?.randomUUID ? crypto.randomUUID() : String(Date.now())
-
-      const filePath = `${customerId}/${serviceDate}_${serviceId}.pdf`
-
-      // 3) Upload to Supabase Storage
-      const { error: uploadErr } = await supabase.storage
-        .from('service-docs')
-        .upload(filePath, blob, { contentType: 'application/pdf', upsert: true })
-
-      if (uploadErr) throw uploadErr
-
-      // 4) Insert row in service_docs (matches your current DB schema)
-      // Required columns from your screenshot: inspection_id (text, NOT NULL) and report_url (text, NOT NULL)
-      const inspectionId = getInspectionIdFromUrl() || serviceId
-
-      const publicUrl = supabase.storage
-        .from('service-docs')
-        .getPublicUrl(filePath)?.data?.publicUrl
-
-      if (!publicUrl) {
-        throw new Error('Could not generate public URL for the uploaded PDF.')
-      }
-
-   const { error: insertErr } = await supabase.from('service_docs').insert({
-  inspection_id: inspectionId,              // text NOT NULL ✅
-  report_url: publicUrl,                    // text NOT NULL ✅
-
-  customer_id: customerId || null,
-  customer_name: customerName || null,
-  customer_email: customerEmail || null,
-  technician_name: technicianName || null,
-
-  service_date: serviceDate || null,
-  service_type: (equipment?.[0]?.serviceType || 'tuneup') as string,
-  storage_path: filePath || null,
-})
-
-      if (insertErr) throw insertErr
-
-      setUploadError(null)
-      alert('Uploaded to customer dashboard ✅')
-    } catch (err: any) {
-      setUploadError(err?.message ?? String(err))
-    } finally {
-      setUploading(false)
+    if (!customerEmail) {
+      throw new Error(
+        'Customer email is required to attach this tune-up to the correct dashboard account.'
+      )
     }
+
+    const blob = await generatePdfBlob()
+
+    const syncPayload = {
+      p_email: customerEmail,
+      p_full_name: customerName || null,
+      p_phone: null,
+      p_service_address: address || null,
+      p_city: null,
+      p_state: null,
+      p_zip_code: null,
+      p_auth_user_id: null,
+    }
+
+    console.log('ensure_customer_for_dashboard payload', syncPayload)
+
+    const { data: ensureResult, error: ensureError } = await supabase.rpc(
+      'ensure_customer_for_dashboard',
+      syncPayload
+    )
+
+    if (ensureError) throw ensureError
+
+    console.log('ensure_customer_for_dashboard result', ensureResult)
+
+    const crmCustomerId = ensureResult?.customer_id as string | undefined
+
+    if (!crmCustomerId) {
+      throw new Error('Could not determine CRM customer id for dashboard upload.')
+    }
+
+    const serviceDate = inspectionDate || new Date().toISOString().slice(0, 10)
+    const serviceId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : String(Date.now())
+
+    const filePath = `${crmCustomerId}/${serviceDate}_${serviceId}.pdf`
+
+    const { error: uploadErr } = await supabase.storage
+      .from('service-docs')
+      .upload(filePath, blob, {
+        contentType: 'application/pdf',
+        upsert: true,
+      })
+
+    if (uploadErr) throw uploadErr
+
+    const publicUrl = supabase.storage
+      .from('service-docs')
+      .getPublicUrl(filePath)?.data?.publicUrl
+
+    if (!publicUrl) {
+      throw new Error('Could not generate public URL for the uploaded PDF.')
+    }
+
+    const inspectionId = getInspectionIdFromUrl() || serviceId
+
+    const insertPayload = {
+      inspection_id: inspectionId,
+      report_url: publicUrl,
+      customer_id: crmCustomerId,
+      customer_name: customerName || null,
+      customer_email: customerEmail || null,
+      technician_name: technicianName || null,
+      service_date: serviceDate || null,
+      service_type: equipment?.[0]?.serviceType || 'tuneup',
+      storage_path: filePath || null,
+    }
+
+    console.log('service_docs insert payload', insertPayload)
+
+    const { error: insertErr } = await supabase
+      .from('service_docs')
+      .insert(insertPayload)
+
+    if (insertErr) throw insertErr
+
+    setUploadError(null)
+    alert('Uploaded to customer dashboard ✅')
+  } catch (err: any) {
+    console.error('Upload to dashboard failed:', err)
+    setUploadError(err?.message ?? String(err))
+  } finally {
+    setUploading(false)
   }
+}
 
   return (
     <div className="summary-report">
