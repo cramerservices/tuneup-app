@@ -36,7 +36,7 @@ export interface InvoiceData {
 }
 
 export function InvoiceModal({
-  selectedSuggestions,
+  selectedSuggestions = [],
   onClose,
   onGenerateInvoice
 }: InvoiceModalProps) {
