@@ -100,7 +100,13 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   const incompleteItems: InspectionItem[] = items.filter((i) => !isCompleted(i))
 
   // A checklist "issue" is any item with severity > 0 (per your rule)
-  const itemsWithIssues: InspectionItem[] = items.filter((i) => getSeverity(i) > 0)
+  const itemsWithIssues: InspectionItem[] = items
+    .filter((i) => getSeverity(i) > 0)
+    .sort((a, b) => getSeverity(b) - getSeverity(a))
+
+  const sortedIncompleteItems: InspectionItem[] = [...incompleteItems].sort(
+    (a, b) => getSeverity(b) - getSeverity(a)
+  )
 
   const completionPercentage =
     items.length > 0 ? Math.round((checkedItems.length / items.length) * 100) : 0
@@ -118,6 +124,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
 
   const severityLabel = (severity: number) => {
     // 0-10 scale
+    if (severity >= 9) return 'Critical'
     if (severity >= 7) return 'High'
     if (severity >= 4) return 'Medium'
     return 'Low'
@@ -519,7 +526,10 @@ const completeAndUploadToDashboard = async () => {
                   const { primary, secondary } = getTitleParts(item)
                   const sev = getSeverity(item)
                   return (
-                    <div key={item.id} className="issue-item">
+                    <div
+                      key={item.id}
+                      className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
+                    >
                       <div className="issue-header">
                         <div className="issue-title">{primary || '—'}</div>
                         <div className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
@@ -541,11 +551,14 @@ const completeAndUploadToDashboard = async () => {
             <h3 style={{ marginTop: 24 }}>Not Completed</h3>
             {incompleteItems.length > 0 ? (
               <div className="issues-list">
-                {incompleteItems.map((item: InspectionItem) => {
+                {sortedIncompleteItems.map((item: InspectionItem) => {
                   const { primary, secondary } = getTitleParts(item)
                   const sev = getSeverity(item)
                   return (
-                    <div key={item.id} className="issue-item">
+                    <div
+                      key={item.id}
+                      className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
+                    >
                       <div className="issue-header">
                         <div className="issue-title">{primary || '—'}</div>
                         <div className="severity-badge severity-low">Not Completed</div>
@@ -642,5 +655,3 @@ const completeAndUploadToDashboard = async () => {
     </div>
   )
 }
-
-
