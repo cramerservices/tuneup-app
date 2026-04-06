@@ -679,10 +679,30 @@ body {
 }
 
 .issue-item {
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 20px;
+}
+
+.issue-item-critical {
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+.issue-item-high {
+  background: #ffedd5;
+  border-color: #ea580c;
+}
+
+.issue-item-medium {
+  background: #fef3c7;
+  border-color: #d97706;
+}
+
+.issue-item-low {
+  background: #ecfeff;
+  border-color: #0891b2;
 }
 
 .issue-header {
@@ -706,6 +726,26 @@ body {
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.severity-critical {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.severity-high {
+  background: #f97316;
+  color: #ffffff;
+}
+
+.severity-medium {
+  background: #f59e0b;
+  color: #111827;
+}
+
+.severity-low {
+  background: #06b6d4;
+  color: #083344;
 }
 
 .issue-notes {
