@@ -592,8 +592,8 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       </section>
 
       <section className="suggestions-section">
-        <h2>Additional Suggestions</h2>
-        <p className="section-description">Select any additional items or upgrades you recommend to the customer:</p>
+        <h2>Add-Ons</h2>
+        <p className="section-description">Select any add-ons you want to include for the customer:</p>
         <div className="suggestions-grid">
           {additionalSuggestions.map((suggestion, index) => (
             <label key={index} className="suggestion-item">
@@ -614,7 +614,7 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
         <textarea
           value={generalNotes}
           onChange={(e) => setGeneralNotes(e.target.value)}
-          placeholder="Add any additional observations, recommendations, or important information for the customer..."
+          placeholder="Add any additional observations, add-ons, or important information for the customer..."
           className="general-notes-textarea"
           rows={5}
         />
