@@ -398,7 +398,7 @@ const completeAndUploadToDashboard = async () => {
           </div>
           <div className="stat-card">
             <div className="stat-value">{sortedSuggestions.length}</div>
-            <div className="stat-label">Recommendations</div>
+            <div className="stat-label">Add-Ons</div>
           </div>
         </div>
 
@@ -465,14 +465,14 @@ const completeAndUploadToDashboard = async () => {
         </div>
 
         <div className="summary-section">
-          <h2>Recommendations</h2>
+          <h2>Add-Ons</h2>
           {sortedSuggestions.length > 0 ? (
             <div style={{ display: 'grid', gap: 16 }}>
               {sortedSuggestions.map((suggestion: any, idx: number) => (
                 <div key={idx} className="recommendation-card">
                   <div className="recommendation-header">
                     <div className="recommendation-title">
-                      {suggestion?.title ?? 'Recommendation'}
+                      {suggestion?.title ?? 'Add-On'}
                     </div>
                     {typeof suggestion?.price === 'number' && (
                       <div className="recommendation-price">${suggestion.price}</div>
@@ -490,7 +490,7 @@ const completeAndUploadToDashboard = async () => {
               ))}
             </div>
           ) : (
-            <div className="no-issues">No recommendations selected.</div>
+            <div className="no-issues">No add-ons selected.</div>
           )}
         </div>
 
@@ -642,6 +642,5 @@ const completeAndUploadToDashboard = async () => {
     </div>
   )
 }
-
 
 

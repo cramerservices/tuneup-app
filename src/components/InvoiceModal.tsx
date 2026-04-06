@@ -221,7 +221,7 @@ export function InvoiceModal({
 
           {selectedSuggestions.length > 0 && (
             <div className="invoice-section">
-              <h3>Approved Recommendations</h3>
+              <h3>Approved Add-Ons</h3>
               <div className="invoice-items">
                 {selectedSuggestions.map(suggestion => {
                   const isApproved = approvedSuggestions.find(s => s.suggestion === suggestion)
