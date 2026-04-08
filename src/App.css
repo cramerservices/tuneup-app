@@ -1664,3 +1664,11 @@ body {
     break-before: page;
   }
 }
+.page-break-before {
+  break-before: page;
+  page-break-before: always;
+}
+.report-content .page-break-before {
+  margin-top: 40px;
+  padding-top: 20px;
+}
