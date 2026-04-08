@@ -270,40 +270,53 @@ const handleSendEmail = async () => {
   }
 }
 
-  const handleExportPDF = async () => {
-    try {
-      setMessage(null)
-      const reportEl = document.querySelector('.report-content') as HTMLElement | null
-      if (!reportEl) {
-        setMessage('Could not find report content to export.')
-        return
-      }
+const handleExportPDF = async () => {
+  const hiddenEls = Array.from(document.querySelectorAll('.no-export')) as HTMLElement[]
 
-      const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
-      const imgData = canvas.toDataURL('image/png')
+  try {
+    setMessage(null)
 
-      const pdf = new jsPDF('p', 'pt', 'letter')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
+    hiddenEls.forEach((el) => {
+      el.dataset.prevDisplay = el.style.display || ''
+      el.style.display = 'none'
+    })
 
-      const imgWidth = pageWidth
-      const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-      let position = 0
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-
-      while (imgHeight + position > pageHeight) {
-        position -= pageHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      }
-
-      pdf.save('tuneup-summary.pdf')
-      setMessage('PDF exported.')
-    } catch (err: any) {
-      setMessage(`Export failed: ${err?.message ?? String(err)}`)
+    const reportEl = document.querySelector('.report-content') as HTMLElement | null
+    if (!reportEl) {
+      setMessage('Could not find report content to export.')
+      return
     }
+
+    const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
+    const imgData = canvas.toDataURL('image/png')
+
+    const pdf = new jsPDF('p', 'pt', 'letter')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+
+    const imgWidth = pageWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let position = 0
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+
+    while (imgHeight + position > pageHeight) {
+      position -= pageHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    }
+
+    pdf.save('tuneup-summary.pdf')
+    setMessage('PDF exported.')
+  } catch (err: any) {
+    setMessage(`Export failed: ${err?.message ?? String(err)}`)
+  } finally {
+    hiddenEls.forEach((el) => {
+      el.style.display = el.dataset.prevDisplay || ''
+      delete el.dataset.prevDisplay
+    })
   }
+}
 
   return (
     <div className="app">
