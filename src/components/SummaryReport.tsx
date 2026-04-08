@@ -389,7 +389,7 @@ const completeAndUploadToDashboard = async () => {
   
 
       {/* Everything inside this ref is what gets turned into the PDF */}
-      <div ref={reportRef}>
+      <div ref={reportRef} className="report-content">
         <div className="summary-stats">
           <div className="stat-card">
             <div className="stat-value">{items.length}</div>
