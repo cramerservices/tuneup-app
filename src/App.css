@@ -1658,3 +1658,9 @@ body {
 .no-export {
   display: inline-flex;
 }
+@media print {
+  .checklist-section {
+    page-break-before: always;
+    break-before: page;
+  }
+}
