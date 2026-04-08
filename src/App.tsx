@@ -207,17 +207,68 @@ function InspectionWrapper({ initialInspectionId }: { initialInspectionId?: stri
     setCurrentStep('inspection')
   }
 
-  const handleSendEmail = async () => {
-    try {
-      setIsSendingEmail(true)
-      setMessage(null)
-      setMessage('Email sent!')
-    } catch (err: any) {
-      setMessage(`Email failed: ${err?.message ?? String(err)}`)
-    } finally {
-      setIsSendingEmail(false)
+const handleSendEmail = async () => {
+  try {
+    setIsSendingEmail(true)
+    setMessage(null)
+
+    if (!summaryData) {
+      throw new Error('No summary data found.')
     }
+
+    if (!summaryData.customerEmail?.trim()) {
+      throw new Error('Customer email is required.')
+    }
+
+    const reportEl = document.querySelector('.report-content') as HTMLElement | null
+    if (!reportEl) {
+      throw new Error('Could not find report content to email.')
+    }
+
+    const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
+    const imgData = canvas.toDataURL('image/png')
+
+    const pdf = new jsPDF('p', 'pt', 'letter')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+
+    const imgWidth = pageWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    let position = 0
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+
+    while (imgHeight + position > pageHeight) {
+      position -= pageHeight
+      pdf.addPage()
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+    }
+
+    const pdfBase64 = pdf.output('datauristring').split(',')[1]
+
+    const { data, error } = await supabase.functions.invoke('send-estimate-email', {
+      body: {
+        to: summaryData.customerEmail,
+        customerName: summaryData.customerName,
+        inspectionDate: summaryData.inspectionDate,
+        technicianName: summaryData.technicianName,
+        address: summaryData.address,
+        pdfBase64,
+        filename: `tuneup-summary-${summaryData.customerName || 'customer'}.pdf`,
+      },
+    })
+
+    if (error) throw error
+
+    console.log('Email function response:', data)
+    setMessage('Email sent!')
+  } catch (err: any) {
+    console.error('Email failed:', err)
+    setMessage(`Email failed: ${err?.message ?? String(err)}`)
+  } finally {
+    setIsSendingEmail(false)
   }
+}
 
   const handleExportPDF = async () => {
     try {
@@ -228,7 +279,7 @@ function InspectionWrapper({ initialInspectionId }: { initialInspectionId?: stri
         return
       }
 
-      const canvas = await html2canvas(reportEl, { scale: 2 })
+      const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
       const imgData = canvas.toDataURL('image/png')
 
       const pdf = new jsPDF('p', 'pt', 'letter')
