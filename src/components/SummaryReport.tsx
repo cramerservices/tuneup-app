@@ -506,20 +506,20 @@ const completeAndUploadToDashboard = async () => {
           <div className="general-notes">{generalNotes || '—'}</div>
         </div>
 
-        {showFullReport && (
-          <div className="checklist-section">
-            <div className="section-header-with-toggle">
-              <h2>Inspection Checklist</h2>
-       <button
-  type="button"
-  className="toggle-report-btn no-export"
-  onClick={() => setShowFullReport(false)}
->
-  Hide Detailed Report
-</button>
-            </div>
+       {showFullReport && (
+  <div className="checklist-section page-break-before">
+    <div className="section-header-with-toggle">
+      <h2>Inspection Checklist</h2>
+      <button
+        type="button"
+        className="toggle-report-btn no-export"
+        onClick={() => setShowFullReport(false)}
+      >
+        Hide Detailed Report
+      </button>
+    </div>
 
-            <h3 style={{ marginTop: 0 }}>Issues Found</h3>
+    <h3 style={{ marginTop: 0 }}>Issues Found</h3>
             {itemsWithIssues.length > 0 ? (
               <div className="issues-list">
                 {itemsWithIssues.map((item: InspectionItem) => {
@@ -579,10 +579,10 @@ const completeAndUploadToDashboard = async () => {
 </div>
         )}
 
-        {!showFullReport && (
-          <div className="checklist-section">
-            <div className="section-header-with-toggle">
-              <h2>Inspection Checklist</h2>
+     {!showFullReport && (
+  <div className="checklist-section page-break-before">
+    <div className="section-header-with-toggle">
+      <h2>Inspection Checklist</h2>
           <button
   type="button"
   className="toggle-report-btn no-export"
