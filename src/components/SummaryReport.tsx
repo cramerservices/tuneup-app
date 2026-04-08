@@ -510,13 +510,13 @@ const completeAndUploadToDashboard = async () => {
           <div className="checklist-section">
             <div className="section-header-with-toggle">
               <h2>Inspection Checklist</h2>
-              <button
-                type="button"
-                className="toggle-report-btn"
-                onClick={() => setShowFullReport(false)}
-              >
-                Hide Detailed Report
-              </button>
+       <button
+  type="button"
+  className="toggle-report-btn no-export"
+  onClick={() => setShowFullReport(false)}
+>
+  Hide Detailed Report
+</button>
             </div>
 
             <h3 style={{ marginTop: 0 }}>Issues Found</h3>
@@ -583,13 +583,13 @@ const completeAndUploadToDashboard = async () => {
           <div className="checklist-section">
             <div className="section-header-with-toggle">
               <h2>Inspection Checklist</h2>
-              <button
-                type="button"
-                className="toggle-report-btn"
-                onClick={() => setShowFullReport(true)}
-              >
-                Show Detailed Report
-              </button>
+          <button
+  type="button"
+  className="toggle-report-btn no-export"
+  onClick={() => setShowFullReport(true)}
+>
+  Show Detailed Report
+</button>
             </div>
             <div className="no-issues">Detailed checklist is hidden.</div>
           </div>
