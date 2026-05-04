@@ -58,18 +58,40 @@ interface InspectionFormProps {
 
 export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selectedServices, inspectionId, onViewSummary, onBackToServiceSelection }: InspectionFormProps) {
   const serviceTypes = (serviceTypesProp ?? selectedServices ?? []) as string[]
-  const [customerName, setCustomerName] = useState('')
-  const [address, setAddress] = useState('')
-  const [customerEmail, setCustomerEmail] = useState('')
-  const [technicianName, setTechnicianName] = useState('')
-  const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().split('T')[0])
-  const [generalNotes, setGeneralNotes] = useState('')
-  const [items, setItems] = useState<ItemState[]>([])
-  const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
-  const [equipment, setEquipment] = useState<EquipmentInfo[]>([])
-  const [saving, setSaving] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
-  const [loading, setLoading] = useState(false)
+ const [customerName, setCustomerName] = useState('')
+const [address, setAddress] = useState('')
+const [customerEmail, setCustomerEmail] = useState('')
+const [technicianName, setTechnicianName] = useState('')
+const [inspectionDate, setInspectionDate] = useState(new Date().toISOString().split('T')[0])
+const [generalNotes, setGeneralNotes] = useState('')
+const [items, setItems] = useState<ItemState[]>([])
+const [selectedSuggestions, setSelectedSuggestions] = useState<string[]>([])
+const [equipment, setEquipment] = useState<EquipmentInfo[]>([])
+
+const [systemReadings, setSystemReadings] = useState<SystemReadings>({
+  blowerCapacitor: '',
+  blowerAmps: '',
+  inducerMotorAmps: '',
+  gasPressure: '',
+  temperatureRise: '',
+  returnAirTemp: '',
+  supplyAirTemp: '',
+  outdoorTemp: '',
+  indoorWetBulb: '',
+  lowSidePressure: '',
+  highSidePressure: '',
+  superheat: '',
+  subcooling: '',
+  compressorAmps: '',
+  condenserFanAmps: '',
+  capacitorHerm: '',
+  capacitorFan: '',
+  capacitorCommon: ''
+})
+
+const [saving, setSaving] = useState(false)
+const [saveMessage, setSaveMessage] = useState('')
+const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const testConnection = async () => {
