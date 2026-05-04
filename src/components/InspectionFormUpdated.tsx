@@ -153,6 +153,28 @@ const [loading, setLoading] = useState(false)
       setGeneralNotes(inspection.notes || '')
       setSelectedSuggestions(inspection.selected_suggestions || [])
 
+      if (inspection.system_readings) {
+  setSystemReadings({
+    blowerCapacitor: inspection.system_readings.blowerCapacitor || '',
+    blowerAmps: inspection.system_readings.blowerAmps || '',
+    inducerMotorAmps: inspection.system_readings.inducerMotorAmps || '',
+    gasPressure: inspection.system_readings.gasPressure || '',
+    temperatureRise: inspection.system_readings.temperatureRise || '',
+    returnAirTemp: inspection.system_readings.returnAirTemp || '',
+    supplyAirTemp: inspection.system_readings.supplyAirTemp || '',
+    outdoorTemp: inspection.system_readings.outdoorTemp || '',
+    indoorWetBulb: inspection.system_readings.indoorWetBulb || '',
+    lowSidePressure: inspection.system_readings.lowSidePressure || '',
+    highSidePressure: inspection.system_readings.highSidePressure || '',
+    superheat: inspection.system_readings.superheat || '',
+    subcooling: inspection.system_readings.subcooling || '',
+    compressorAmps: inspection.system_readings.compressorAmps || '',
+    condenserFanAmps: inspection.system_readings.condenserFanAmps || '',
+    capacitorHerm: inspection.system_readings.capacitorHerm || '',
+    capacitorFan: inspection.system_readings.capacitorFan || '',
+    capacitorCommon: inspection.system_readings.capacitorCommon || ''
+  })
+}
       const { data: itemsData, error: itemsError } = await supabase
         .from('inspection_items')
         .select('*')
@@ -365,40 +387,42 @@ const [loading, setLoading] = useState(false)
       let finalInspectionId = inspectionId
 
       if (inspectionId) {
-        const { error: updateError } = await supabase
-          .from('inspections')
-          .update({
-             customer_id: customerId,
-             customer_name: customerName,
-            address: address,
-            technician_name: technicianName,
-            inspection_date: inspectionDate,
-            notes: generalNotes,
-            service_types: serviceTypes,
-            selected_suggestions: selectedSuggestions,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', inspectionId)
+       const { error: updateError } = await supabase
+  .from('inspections')
+  .update({
+    customer_id: customerId,
+    customer_name: customerName,
+    address: address,
+    technician_name: technicianName,
+    inspection_date: inspectionDate,
+    notes: generalNotes,
+    service_types: serviceTypes,
+    selected_suggestions: selectedSuggestions,
+    system_readings: systemReadings,
+    updated_at: new Date().toISOString()
+  })
+  .eq('id', inspectionId)
 
         if (updateError) throw updateError
 
         await supabase.from('inspection_items').delete().eq('inspection_id', inspectionId)
         await supabase.from('equipment_info').delete().eq('inspection_id', inspectionId)
       } else {
-        const { data: inspection, error: inspectionError } = await supabase
-          .from('inspections')
-          .insert({
-             customer_id: customerId,
-             customer_name: customerName,
-            address: address,
-            technician_name: technicianName,
-            inspection_date: inspectionDate,
-            notes: generalNotes,
-            service_types: serviceTypes,
-            selected_suggestions: selectedSuggestions
-          })
-          .select()
-          .maybeSingle()
+const { data: inspection, error: inspectionError } = await supabase
+  .from('inspections')
+  .insert({
+    customer_id: customerId,
+    customer_name: customerName,
+    address: address,
+    technician_name: technicianName,
+    inspection_date: inspectionDate,
+    notes: generalNotes,
+    service_types: serviceTypes,
+    selected_suggestions: selectedSuggestions,
+    system_readings: systemReadings
+  })
+  .select()
+  .maybeSingle()
 
         if (inspectionError) {
           console.error('Inspection error details:', inspectionError)
