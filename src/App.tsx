@@ -34,8 +34,29 @@ interface EquipmentInfo {
   brand: string
   modelNumber: string
   serialNumber: string
+  age?: string
+  notes?: string
 }
-
+interface SystemReadings {
+  blowerCapacitor?: string
+  blowerAmps?: string
+  inducerMotorAmps?: string
+  gasPressure?: string
+  temperatureRise?: string
+  returnAirTemp?: string
+  supplyAirTemp?: string
+  outdoorTemp?: string
+  indoorWetBulb?: string
+  lowSidePressure?: string
+  highSidePressure?: string
+  superheat?: string
+  subcooling?: string
+  compressorAmps?: string
+  condenserFanAmps?: string
+  capacitorHerm?: string
+  capacitorFan?: string
+  capacitorCommon?: string
+}
 interface SummaryData {
   customerName: string
   address: string
@@ -46,6 +67,7 @@ interface SummaryData {
   selectedSuggestions: string[]
   generalNotes: string
   equipment: EquipmentInfo[]
+  systemReadings?: SystemReadings
 }
 
 function SavedInspectionsWrapper() {
