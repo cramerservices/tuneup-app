@@ -16,7 +16,7 @@ export const furnaceItems: ChecklistItem[] = [
   { item: 'Inspect Heat Exchanger', serviceTypes: ['furnace'] },
   { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['furnace'] }, 
   { item: 'Test Safety Switches', serviceTypes: ['furnace'] },
- { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] }
+ { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] },
   { item: 'Check Carbon Monoxide Level', serviceTypes: ['furnace'] },
 { item: 'Inspect Humidifier Condition', serviceTypes: ['furnace'] },
 { item: 'Inspect UV Light Condition', serviceTypes: ['furnace', 'ac'] },
@@ -53,7 +53,7 @@ export const acItems: ChecklistItem[] = [
 { item: 'Check For Visible Air Leaks At Duct Connections', serviceTypes: ['ac', 'furnace'] },
 { item: 'Check Filter Rack Seal', serviceTypes: ['ac', 'furnace'] },
 { item: 'Check For Airflow Concerns', serviceTypes: ['ac', 'furnace'] },
-{ item: 'Inspect Outdoor Fan/Motor', serviceTypes: ['ac', 'mini_split'] }
+{ item: 'Inspect Outdoor Fan/Motor', serviceTypes: ['ac', 'mini_split'] },
 { item: 'Inspect Evaporator Coil Condition', serviceTypes: ['ac'] },
 { item: 'Inspect Primary Condensate Drain', serviceTypes: ['ac'] },
 { item: 'Inspect Secondary Condensate Drain', serviceTypes: ['ac'] },
