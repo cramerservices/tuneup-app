@@ -15,8 +15,28 @@ interface EquipmentInfo {
   brand: string
   modelNumber: string
   serialNumber: string
+  age: string
 }
-
+interface SystemReadings {
+  blowerCapacitor: string
+  blowerAmps: string
+  inducerMotorAmps: string
+  gasPressure: string
+  temperatureRise: string
+  returnAirTemp: string
+  supplyAirTemp: string
+  outdoorTemp: string
+  indoorWetBulb: string
+  lowSidePressure: string
+  highSidePressure: string
+  superheat: string
+  subcooling: string
+  compressorAmps: string
+  condenserFanAmps: string
+  capacitorHerm: string
+  capacitorFan: string
+  capacitorCommon: string
+}
 interface InspectionFormProps {
   // Accept either prop name so the app doesn't crash if parent passes selectedServices
   serviceTypes?: string[]
@@ -134,12 +154,13 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
 
       if (equipmentError) throw equipmentError
 
-      const loadedEquipment: EquipmentInfo[] = (equipmentData || []).map(equip => ({
-        serviceType: equip.service_type,
-        brand: equip.brand || '',
-        modelNumber: equip.model_number || '',
-        serialNumber: equip.serial_number || ''
-      }))
+   const loadedEquipment: EquipmentInfo[] = (equipmentData || []).map(equip => ({
+  serviceType: equip.service_type,
+  brand: equip.brand || '',
+  modelNumber: equip.model_number || '',
+  serialNumber: equip.serial_number || '',
+  age: equip.age || ''
+}))
 
       setEquipment(loadedEquipment)
 
@@ -152,12 +173,13 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
   }
 
   useEffect(() => {
-    const initialEquipment = serviceTypes.map(type => ({
-      serviceType: type,
-      brand: '',
-      modelNumber: '',
-      serialNumber: ''
-    }))
+ const initialEquipment = serviceTypes.map(type => ({
+  serviceType: type,
+  brand: '',
+  modelNumber: '',
+  serialNumber: '',
+  age: ''
+}))
     setEquipment(initialEquipment)
   }, [serviceTypes])
 
@@ -384,15 +406,16 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
 
       if (itemsError) throw itemsError
 
-      const equipmentToInsert = equipment
-        .filter(equip => equip.brand || equip.modelNumber || equip.serialNumber)
-        .map(equip => ({
-          inspection_id: finalInspectionId,
-          service_type: equip.serviceType,
-          brand: equip.brand,
-          model_number: equip.modelNumber,
-          serial_number: equip.serialNumber
-        }))
+    const equipmentToInsert = equipment
+  .filter(equip => equip.brand || equip.modelNumber || equip.serialNumber || equip.age)
+  .map(equip => ({
+    inspection_id: finalInspectionId,
+    service_type: equip.serviceType,
+    brand: equip.brand,
+    model_number: equip.modelNumber,
+    serial_number: equip.serialNumber,
+    age: equip.age
+  }))
 
       if (equipmentToInsert.length > 0) {
         const { error: equipmentError } = await supabase
@@ -407,17 +430,18 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
       setSaveMessage(inspectionId ? 'Inspection updated successfully!' : 'Inspection saved successfully!')
 
       setTimeout(() => {
-        onViewSummary({
-          customerName,
-        customerEmail,
-          address,
-          technicianName,
-          inspectionDate,
-          items,
-          selectedSuggestions,
-          generalNotes,
-          equipment
-        })
+       onViewSummary({
+  customerName,
+  customerEmail,
+  address,
+  technicianName,
+  inspectionDate,
+  items,
+  selectedSuggestions,
+  generalNotes,
+  equipment,
+  systemReadings
+})
       }, 1500)
     } catch (error) {
       console.error('Error saving inspection:', error)
@@ -568,11 +592,216 @@ export function InspectionFormUpdated({ serviceTypes: serviceTypesProp, selected
                   placeholder="Enter serial number"
                 />
               </div>
+              <div className="form-field">
+  <label>Age</label>
+  <input
+    type="text"
+    value={equip.age}
+    onChange={(e) => {
+      const newEquipment = [...equipment]
+      newEquipment[index].age = e.target.value
+      setEquipment(newEquipment)
+    }}
+    placeholder="Example: 12 years"
+  />
+</div>
             </div>
           </div>
         ))}
       </section>
+<section className="system-readings-section">
+  <h2>System Readings</h2>
 
+  <div className="readings-card">
+    <h3 className="equipment-type-header">Furnace / Air Handler Readings</h3>
+    <div className="form-grid">
+      <div className="form-field">
+        <label>Blower Capacitor</label>
+        <input
+          type="text"
+          value={systemReadings.blowerCapacitor}
+          onChange={(e) => setSystemReadings({ ...systemReadings, blowerCapacitor: e.target.value })}
+          placeholder="Example: 7.5 / 10 MFD"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Blower Amps</label>
+        <input
+          type="text"
+          value={systemReadings.blowerAmps}
+          onChange={(e) => setSystemReadings({ ...systemReadings, blowerAmps: e.target.value })}
+          placeholder="Example: 3.2 A"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Inducer Motor Amps</label>
+        <input
+          type="text"
+          value={systemReadings.inducerMotorAmps}
+          onChange={(e) => setSystemReadings({ ...systemReadings, inducerMotorAmps: e.target.value })}
+          placeholder="Example: 1.1 A"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Gas Pressure</label>
+        <input
+          type="text"
+          value={systemReadings.gasPressure}
+          onChange={(e) => setSystemReadings({ ...systemReadings, gasPressure: e.target.value })}
+          placeholder="Example: 3.5 WC"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Temperature Rise</label>
+        <input
+          type="text"
+          value={systemReadings.temperatureRise}
+          onChange={(e) => setSystemReadings({ ...systemReadings, temperatureRise: e.target.value })}
+          placeholder="Example: 45°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Return Air Temp</label>
+        <input
+          type="text"
+          value={systemReadings.returnAirTemp}
+          onChange={(e) => setSystemReadings({ ...systemReadings, returnAirTemp: e.target.value })}
+          placeholder="Example: 70°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Supply Air Temp</label>
+        <input
+          type="text"
+          value={systemReadings.supplyAirTemp}
+          onChange={(e) => setSystemReadings({ ...systemReadings, supplyAirTemp: e.target.value })}
+          placeholder="Example: 115°"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div className="readings-card">
+    <h3 className="equipment-type-header">AC / Heat Pump Readings</h3>
+    <div className="form-grid">
+      <div className="form-field">
+        <label>Outdoor Temp</label>
+        <input
+          type="text"
+          value={systemReadings.outdoorTemp}
+          onChange={(e) => setSystemReadings({ ...systemReadings, outdoorTemp: e.target.value })}
+          placeholder="Example: 78°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Indoor Wet Bulb</label>
+        <input
+          type="text"
+          value={systemReadings.indoorWetBulb}
+          onChange={(e) => setSystemReadings({ ...systemReadings, indoorWetBulb: e.target.value })}
+          placeholder="Example: 63°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Low Side Pressure</label>
+        <input
+          type="text"
+          value={systemReadings.lowSidePressure}
+          onChange={(e) => setSystemReadings({ ...systemReadings, lowSidePressure: e.target.value })}
+          placeholder="Example: 136 PSI"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>High Side Pressure</label>
+        <input
+          type="text"
+          value={systemReadings.highSidePressure}
+          onChange={(e) => setSystemReadings({ ...systemReadings, highSidePressure: e.target.value })}
+          placeholder="Example: 325 PSI"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Superheat</label>
+        <input
+          type="text"
+          value={systemReadings.superheat}
+          onChange={(e) => setSystemReadings({ ...systemReadings, superheat: e.target.value })}
+          placeholder="Example: 12°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Subcooling</label>
+        <input
+          type="text"
+          value={systemReadings.subcooling}
+          onChange={(e) => setSystemReadings({ ...systemReadings, subcooling: e.target.value })}
+          placeholder="Example: 10°"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Compressor Amps</label>
+        <input
+          type="text"
+          value={systemReadings.compressorAmps}
+          onChange={(e) => setSystemReadings({ ...systemReadings, compressorAmps: e.target.value })}
+          placeholder="Example: 8.5 A"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Condenser Fan Amps</label>
+        <input
+          type="text"
+          value={systemReadings.condenserFanAmps}
+          onChange={(e) => setSystemReadings({ ...systemReadings, condenserFanAmps: e.target.value })}
+          placeholder="Example: 1.2 A"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Capacitor Herm</label>
+        <input
+          type="text"
+          value={systemReadings.capacitorHerm}
+          onChange={(e) => setSystemReadings({ ...systemReadings, capacitorHerm: e.target.value })}
+          placeholder="Example: 45"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Capacitor Fan</label>
+        <input
+          type="text"
+          value={systemReadings.capacitorFan}
+          onChange={(e) => setSystemReadings({ ...systemReadings, capacitorFan: e.target.value })}
+          placeholder="Example: 5"
+        />
+      </div>
+
+      <div className="form-field">
+        <label>Capacitor Common</label>
+        <input
+          type="text"
+          value={systemReadings.capacitorCommon}
+          onChange={(e) => setSystemReadings({ ...systemReadings, capacitorCommon: e.target.value })}
+          placeholder="Example: Common"
+        />
+      </div>
+    </div>
+  </div>
+</section>
       <section className="checklist-section">
         <h2>Inspection Checklist</h2>
         <div className="category-items">
