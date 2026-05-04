@@ -31,7 +31,26 @@ interface EquipmentInfo {
   age?: string
   notes?: string
 }
-
+interface SystemReadings {
+  blowerCapacitor?: string
+  blowerAmps?: string
+  inducerMotorAmps?: string
+  gasPressure?: string
+  temperatureRise?: string
+  returnAirTemp?: string
+  supplyAirTemp?: string
+  outdoorTemp?: string
+  indoorWetBulb?: string
+  lowSidePressure?: string
+  highSidePressure?: string
+  superheat?: string
+  subcooling?: string
+  compressorAmps?: string
+  condenserFanAmps?: string
+  capacitorHerm?: string
+  capacitorFan?: string
+  capacitorCommon?: string
+}
 interface SummaryDataLike {
   customerName?: string
   address?: string
@@ -42,8 +61,8 @@ interface SummaryDataLike {
   selectedSuggestions?: string[]
   generalNotes?: string
   equipment?: EquipmentInfo[]
+  systemReadings?: SystemReadings
 }
-
 interface SummaryReportProps {
   data: SummaryDataLike
   onBack: () => void
@@ -60,7 +79,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   isSending,
 }) => {
   const reportRef = useRef<HTMLDivElement | null>(null)
-  const [showFullReport, setShowFullReport] = useState(true)
+  const [showDetailedReport, setShowDetailedReport] = useState(false)
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [invoiceData, setInvoiceData] = useState<any>(null)
@@ -79,7 +98,13 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   const selectedSuggestions: string[] = Array.isArray(data.selectedSuggestions) ? data.selectedSuggestions : []
   const equipment: EquipmentInfo[] = Array.isArray(data.equipment) ? data.equipment : []
   const generalNotes = data.generalNotes || ''
+const systemReadings = data.systemReadings || {}
 
+const hasSystemReadings = Object.values(systemReadings).some(
+  (value) => String(value || '').trim() !== ''
+)
+
+const completedWithNoIssues = checkedItems.filter((item) => getSeverity(item) === 0)
   const getTitleParts = (item: InspectionItem) => {
     const primary = (item.label || item.itemName || '').trim()
     const secondary =
@@ -96,8 +121,15 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     return Number.isFinite(s) ? s : 0
   }
 
-  const checkedItems: InspectionItem[] = items.filter((i) => isCompleted(i))
-  const incompleteItems: InspectionItem[] = items.filter((i) => !isCompleted(i))
+const systemReadings = data.systemReadings || {}
+
+const checkedItems: InspectionItem[] = items.filter((i) => isCompleted(i))
+const incompleteItems: InspectionItem[] = items.filter((i) => !isCompleted(i))
+const completedWithNoIssues = checkedItems.filter((item) => getSeverity(item) === 0)
+
+const hasSystemReadings = Object.values(systemReadings).some(
+  (value) => String(value || '').trim() !== ''
+)
 
   // A checklist "issue" is any item with severity > 0 (per your rule)
   const itemsWithIssues: InspectionItem[] = items
@@ -129,7 +161,233 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     if (severity >= 4) return 'Medium'
     return 'Low'
   }
+const renderReading = (label: string, value: any) => {
+  const displayValue = String(value || '').trim()
+  if (!displayValue) return null
 
+  return (
+    <div className="reading-row">
+      <span className="reading-label">{label}</span>
+      <span className="reading-value">{displayValue}</span>
+    </div>
+  )
+}
+
+const renderSystemReadingsSection = () => {
+  if (!hasSystemReadings) return null
+
+  return (
+           <div className="summary-section">
+          <h2>Equipment</h2>
+          {equipment.length > 0 ? (
+            <div className="equipment-summary-grid">
+              {equipment.map((eq, idx) => (
+                <div key={idx} className="equipment-card">
+                  <p>
+                    <strong>Service Type:</strong> {eq.serviceType || '—'}
+                  </p>
+                  <p>
+                    <strong>Brand:</strong> {eq.brand || '—'}
+                  </p>
+                  <p>
+                    <strong>Model #:</strong> {(eq as any).modelNumber || (eq as any).model || '—'}
+                  </p>
+                  <p>
+                    <strong>Serial:</strong> {(eq as any).serialNumber || (eq as any).serial || '—'}
+                  </p>
+                  {eq.age && (
+                    <p>
+                      <strong>Age:</strong> {eq.age}
+                    </p>
+                  )}
+                  {eq.notes && (
+                    <p>
+                      <strong>Notes:</strong> {eq.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-equipment">No equipment details recorded.</div>
+          )}
+        </div>
+
+        {renderSystemReadingsSection()}
+
+        <div className="summary-section">
+          <h2>Add-Ons</h2>
+    <h3 style={{ marginTop: 0 }}>Issues Found</h3>
+    {itemsWithIssues.length > 0 ? (
+      <div className="issues-list">
+        {itemsWithIssues.map((item: InspectionItem) => {
+          const { primary, secondary } = getTitleParts(item)
+          const sev = getSeverity(item)
+
+          return (
+            <div
+              key={item.id || item.itemName}
+              className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
+            >
+              <div className="issue-header">
+                <div className="issue-title">{primary || '—'}</div>
+                <div className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
+                  Severity {sev}/10
+                </div>
+              </div>
+
+              {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+              {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <div className="no-issues">No issues were found during the inspection.</div>
+    )}
+
+    <h3 style={{ marginTop: 24 }}>Not Completed</h3>
+    {incompleteItems.length > 0 ? (
+      <div className="issues-list">
+        {sortedIncompleteItems.map((item: InspectionItem) => {
+          const { primary, secondary } = getTitleParts(item)
+          const sev = getSeverity(item)
+
+          return (
+            <div
+              key={item.id || item.itemName}
+              className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
+            >
+              <div className="issue-header">
+                <div className="issue-title">{primary || '—'}</div>
+                <div className="severity-badge severity-low">Not Completed</div>
+              </div>
+
+              {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+              {sev > 0 ? <div className="item-notes"><strong>Severity:</strong> {sev}/10</div> : null}
+              {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <div className="no-issues">All items were checked off.</div>
+    )}
+  </div>
+)
+
+const renderDetailedChecklist = () => (
+  <div className="checklist-section page-break-before">
+    <h2>Detailed Inspection Checklist</h2>
+
+    <h3 style={{ marginTop: 0 }}>Issues Found</h3>
+    {itemsWithIssues.length > 0 ? (
+      <div className="issues-list">
+        {itemsWithIssues.map((item: InspectionItem) => {
+          const { primary, secondary } = getTitleParts(item)
+          const sev = getSeverity(item)
+
+          return (
+            <div
+              key={`issue-${item.id || item.itemName}`}
+              className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
+            >
+              <div className="issue-header">
+                <div className="issue-title">{primary || '—'}</div>
+                <div className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
+                  Severity {sev}/10
+                </div>
+              </div>
+
+              {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+              {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <div className="no-issues">No issues were found during the inspection.</div>
+    )}
+
+    <h3 style={{ marginTop: 24 }}>All Checklist Items</h3>
+    <div className="detailed-checklist-list">
+      {items.map((item: InspectionItem) => {
+        const { primary, secondary } = getTitleParts(item)
+        const sev = getSeverity(item)
+        const completed = isCompleted(item)
+        const statusText = completed ? (sev > 0 ? 'Issue Found' : 'Completed') : 'Not Completed'
+        const statusClass = completed ? (sev > 0 ? 'status-issue' : 'status-complete') : 'status-incomplete'
+
+        return (
+          <div key={`detail-${item.id || item.itemName}`} className="detailed-checklist-item">
+            <div className="detailed-checklist-header">
+              <div>
+                <div className="detailed-checklist-title">{primary || '—'}</div>
+                {secondary ? <div className="detailed-checklist-subtitle">{secondary}</div> : null}
+              </div>
+
+              <div className="detailed-badges">
+                <span className={`status-badge ${statusClass}`}>{statusText}</span>
+                <span className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
+                  Severity {sev}/10
+                </span>
+              </div>
+            </div>
+
+            <div className="detailed-checklist-notes">
+              <strong>Notes:</strong> {item.notes?.trim() || '—'}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+
+    <h3 style={{ marginTop: 24 }}>Completed With No Issues</h3>
+    {completedWithNoIssues.length > 0 ? (
+      <div className="completed-list">
+        {completedWithNoIssues.map((item) => {
+          const { primary } = getTitleParts(item)
+          return (
+            <div key={`complete-${item.id || item.itemName}`} className="completed-item">
+              <div className="completed-check">✓</div>
+              <div>
+                <div className="completed-name">{primary || '—'}</div>
+                {item.notes ? <div className="completed-notes">{item.notes}</div> : null}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <div className="no-issues">No completed items without issues were recorded.</div>
+    )}
+
+    <h3 style={{ marginTop: 24 }}>Not Completed</h3>
+    {incompleteItems.length > 0 ? (
+      <div className="issues-list">
+        {sortedIncompleteItems.map((item: InspectionItem) => {
+          const { primary, secondary } = getTitleParts(item)
+          const sev = getSeverity(item)
+
+          return (
+            <div key={`incomplete-${item.id || item.itemName}`} className="issue-item">
+              <div className="issue-header">
+                <div className="issue-title">{primary || '—'}</div>
+                <div className="severity-badge severity-low">Not Completed</div>
+              </div>
+
+              {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
+              <div className="item-notes"><strong>Severity:</strong> {sev}/10</div>
+              {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
+            </div>
+          )
+        })}
+      </div>
+    ) : (
+      <div className="no-issues">All items were checked off.</div>
+    )}
+  </div>
+)
  const handleGenerateInvoice = async (generated: any) => {
   try {
     setInvoiceData(generated)
@@ -385,7 +643,21 @@ const completeAndUploadToDashboard = async () => {
     invoiceData={invoiceData}
   />
 )}
+<div className="report-view-toggle no-export">
+  <button
+    type="button"
+    className="toggle-report-btn"
+    onClick={() => setShowDetailedReport((prev) => !prev)}
+  >
+    {showDetailedReport ? 'Show Simple Report' : 'Show Detailed Report'}
+  </button>
 
+  <span className="report-view-label">
+    {showDetailedReport
+      ? 'Detailed report is showing. Export and email will include all checklist items and readings.'
+      : 'Simple report is showing. Export and email will include the customer-friendly summary.'}
+  </span>
+</div>
   
 
       {/* Everything inside this ref is what gets turned into the PDF */}
@@ -506,94 +778,7 @@ const completeAndUploadToDashboard = async () => {
           <div className="general-notes">{generalNotes || '—'}</div>
         </div>
 
-       {showFullReport && (
-  <div className="checklist-section page-break-before">
-    <div className="section-header-with-toggle">
-      <h2>Inspection Checklist</h2>
-      <button
-        type="button"
-        className="toggle-report-btn no-export"
-        onClick={() => setShowFullReport(false)}
-      >
-        Hide Detailed Report
-      </button>
-    </div>
-
-    <h3 style={{ marginTop: 0 }}>Issues Found</h3>
-            {itemsWithIssues.length > 0 ? (
-              <div className="issues-list">
-                {itemsWithIssues.map((item: InspectionItem) => {
-                  const { primary, secondary } = getTitleParts(item)
-                  const sev = getSeverity(item)
-                  return (
-                    <div
-                      key={item.id}
-                      className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
-                    >
-                      <div className="issue-header">
-                        <div className="issue-title">{primary || '—'}</div>
-                        <div className={`severity-badge severity-${severityLabel(sev).toLowerCase()}`}>
-                          Severity {sev}/10
-                        </div>
-                      </div>
-
-                      {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
-                      {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="no-issues">No issues were found during the inspection.</div>
-            )}
-          
-
-            <h3 style={{ marginTop: 24 }}>Not Completed</h3>
-            {incompleteItems.length > 0 ? (
-              <div className="issues-list">
-                {sortedIncompleteItems.map((item: InspectionItem) => {
-                  const { primary, secondary } = getTitleParts(item)
-                  const sev = getSeverity(item)
-                  return (
-                    <div
-                      key={item.id}
-                      className={`issue-item issue-item-${severityLabel(sev).toLowerCase()}`}
-                    >
-                      <div className="issue-header">
-                        <div className="issue-title">{primary || '—'}</div>
-                        <div className="severity-badge severity-low">Not Completed</div>
-                      </div>
-
-                      {secondary ? <div className="item-notes"><strong>Item:</strong> {secondary}</div> : null}
-                      {sev > 0 ? (
-                        <div className="item-notes"><strong>Severity:</strong> {sev}/10</div>
-                      ) : null}
-                      {item.notes ? <div className="issue-notes"><strong>Notes:</strong> {item.notes}</div> : null}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="no-issues">All items were checked off.</div>
-            )}
-</div>
-        )}
-
-     {!showFullReport && (
-  <div className="checklist-section page-break-before">
-    <div className="section-header-with-toggle">
-      <h2>Inspection Checklist</h2>
-          <button
-  type="button"
-  className="toggle-report-btn no-export"
-  onClick={() => setShowFullReport(true)}
->
-  Show Detailed Report
-</button>
-            </div>
-            <div className="no-issues">Detailed checklist is hidden.</div>
-          </div>
-        )}
+              {showDetailedReport ? renderDetailedChecklist() : renderSimpleChecklist()}
       </div>
 
       <div className="summary-actions">
