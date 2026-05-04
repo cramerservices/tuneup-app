@@ -873,7 +873,30 @@ body {
   gap: 28px;
   margin-bottom: 28px;
 }
+.system-readings-section {
+  padding: 32px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+}
 
+.system-readings-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #111827;
+}
+
+.readings-card {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.readings-card:last-child {
+  margin-bottom: 0;
+}
 @media (max-width: 900px) {
   .maintenance-plans-grid {
     grid-template-columns: 1fr;
