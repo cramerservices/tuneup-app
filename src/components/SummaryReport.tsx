@@ -782,7 +782,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
           )}
         </div>
 
-        {renderSystemReadingsSection()}
+        {showDetailedReport ? renderSystemReadingsSection() : null}
 
         <div className="summary-section">
           <h2>Add-Ons</h2>
