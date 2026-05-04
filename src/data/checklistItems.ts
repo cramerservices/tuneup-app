@@ -17,6 +17,17 @@ export const furnaceItems: ChecklistItem[] = [
   { item: 'Inspect Gas Connect For Leaks (Furnace)', serviceTypes: ['furnace'] }, 
   { item: 'Test Safety Switches', serviceTypes: ['furnace'] },
  { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] }
+  { item: 'Check Carbon Monoxide Level', serviceTypes: ['furnace'] },
+{ item: 'Inspect Humidifier Condition', serviceTypes: ['furnace'] },
+{ item: 'Inspect UV Light Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Inspect Air Purifier Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Inspect Media Filter Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Check If Germicidal Bulb Needs Replacement', serviceTypes: ['furnace', 'ac'] },
+  { item: 'Inspect Return Duct Condition', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Inspect Supply Duct Condition', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check For Visible Air Leaks At Duct Connections', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check Filter Rack Seal', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check For Airflow Concerns', serviceTypes: ['ac', 'furnace'] },
 ]
 
 export const acItems: ChecklistItem[] = [
@@ -31,8 +42,25 @@ export const acItems: ChecklistItem[] = [
   { item: 'Clean Condenser', serviceTypes: ['ac', 'mini_split'] },
    { item: 'Check Refrigerant Line Insulation', serviceTypes: ['ac', 'mini_split'] },
   { item: 'Inspect Duct Connections For Leaks/Disconnects (Visible Areas)', serviceTypes: ['ac', 'furnace'] },
+  { item: 'Check Carbon Monoxide Level', serviceTypes: ['furnace'] },
+{ item: 'Inspect Humidifier Condition', serviceTypes: ['furnace'] },
+{ item: 'Inspect UV Light Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Inspect Air Purifier Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Inspect Media Filter Condition', serviceTypes: ['furnace', 'ac'] },
+{ item: 'Check If Germicidal Bulb Needs Replacement', serviceTypes: ['furnace', 'ac'] },
+  { item: 'Inspect Return Duct Condition', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Inspect Supply Duct Condition', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check For Visible Air Leaks At Duct Connections', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check Filter Rack Seal', serviceTypes: ['ac', 'furnace'] },
+{ item: 'Check For Airflow Concerns', serviceTypes: ['ac', 'furnace'] },
 { item: 'Inspect Outdoor Fan/Motor', serviceTypes: ['ac', 'mini_split'] }
-
+{ item: 'Inspect Evaporator Coil Condition', serviceTypes: ['ac'] },
+{ item: 'Inspect Primary Condensate Drain', serviceTypes: ['ac'] },
+{ item: 'Inspect Secondary Condensate Drain', serviceTypes: ['ac'] },
+{ item: 'Inspect Drain Safety Switch', serviceTypes: ['ac'] },
+{ item: 'Inspect Condensate Drain Pan', serviceTypes: ['ac'] },
+{ item: 'Inspect TXV Bulb Position And Insulation', serviceTypes: ['ac'] },
+{ item: 'Add Drain Pan Treatment If Needed', serviceTypes: ['ac'] },
 ]
 
 export const hotWaterTankItems: ChecklistItem[] = [
