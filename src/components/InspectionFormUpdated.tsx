@@ -42,17 +42,18 @@ interface InspectionFormProps {
   serviceTypes?: string[]
   selectedServices?: string[]
   inspectionId?: string
-  onViewSummary: (data: {
-    customerName: string
-    customerEmail?: string
-    address: string
-    technicianName: string
-    inspectionDate: string
-    items: ItemState[]
-    selectedSuggestions: string[]
-    generalNotes: string
-    equipment: EquipmentInfo[]
-  }) => void
+onViewSummary: (data: {
+  customerName: string
+  customerEmail?: string
+  address: string
+  technicianName: string
+  inspectionDate: string
+  items: ItemState[]
+  selectedSuggestions: string[]
+  generalNotes: string
+  equipment: EquipmentInfo[]
+  systemReadings: SystemReadings
+}) => void
   onBackToServiceSelection: () => void
 }
 
