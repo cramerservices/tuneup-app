@@ -1732,7 +1732,56 @@ body {
   margin-top: 40px;
   padding-top: 20px;
 }
+.item-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
+.quick-note-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.quick-note-good {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.quick-note-good:hover {
+  background: #a7f3d0;
+  transform: translateY(-1px);
+}
+
+.quick-note-na {
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+.quick-note-na:hover {
+  background: #d1d5db;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .item-action-buttons {
+    width: 100%;
+  }
+
+  .quick-note-btn,
+  .item-action-buttons .notes-toggle {
+    flex: 1;
+  }
+}
 /* Print / PDF behavior */
 @media print {
   body {
