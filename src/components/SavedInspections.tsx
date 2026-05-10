@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 interface Inspection {
   id: string
   customer_name: string
+  customer_email?: string
   address: string
   technician_name: string
   inspection_date: string
@@ -315,10 +316,11 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
         <div className="inspections-grid">
           {inspections.map((inspection) => (
             <div key={inspection.id} className="inspection-card">
-              <div className="inspection-header">
-                <h3 className="customer-name">{inspection.customer_name || 'Unnamed Customer'}</h3>
-                <div className="inspection-address">{inspection.address || 'No address provided'}</div>
-              </div>
+            <div className="inspection-header">
+  <h3 className="customer-name">{inspection.customer_name || 'Unnamed Customer'}</h3>
+  <div className="inspection-address">{inspection.address || 'No address provided'}</div>
+  <div className="inspection-email">{inspection.customer_email || 'No email saved'}</div>
+</div>
 
               <div className="inspection-details">
                 <div className="detail-row">
