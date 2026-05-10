@@ -126,9 +126,10 @@ const [loading, setLoading] = useState(false)
       if (inspectionError) throw inspectionError
       if (!inspection) throw new Error('Inspection not found')
 
-      setCustomerName(inspection.customer_name || '')
-      setAddress(inspection.address || '')
-      setTechnicianName(inspection.technician_name || '')
+setCustomerName(inspection.customer_name || '')
+setAddress(inspection.address || '')
+setTechnicianName(inspection.technician_name || '')
+setCustomerEmail(inspection.customer_email || '')
       // If this inspection is already linked to a customer, prefill their email (nice for editing)
       if (inspection.customer_id) {
         const { data: customer } = await supabase
@@ -390,18 +391,19 @@ const [loading, setLoading] = useState(false)
       if (inspectionId) {
        const { error: updateError } = await supabase
   .from('inspections')
-  .update({
-    customer_id: customerId,
-    customer_name: customerName,
-    address: address,
-    technician_name: technicianName,
-    inspection_date: inspectionDate,
-    notes: generalNotes,
-    service_types: serviceTypes,
-    selected_suggestions: selectedSuggestions,
-    system_readings: systemReadings,
-    updated_at: new Date().toISOString()
-  })
+ .update({
+  customer_id: customerId,
+  customer_email: normalizedEmail,
+  customer_name: customerName,
+  address: address,
+  technician_name: technicianName,
+  inspection_date: inspectionDate,
+  notes: generalNotes,
+  service_types: serviceTypes,
+  selected_suggestions: selectedSuggestions,
+  system_readings: systemReadings,
+  updated_at: new Date().toISOString()
+})
   .eq('id', inspectionId)
 
         if (updateError) throw updateError
@@ -411,17 +413,18 @@ const [loading, setLoading] = useState(false)
       } else {
 const { data: inspection, error: inspectionError } = await supabase
   .from('inspections')
-  .insert({
-    customer_id: customerId,
-    customer_name: customerName,
-    address: address,
-    technician_name: technicianName,
-    inspection_date: inspectionDate,
-    notes: generalNotes,
-    service_types: serviceTypes,
-    selected_suggestions: selectedSuggestions,
-    system_readings: systemReadings
-  })
+ .insert({
+  customer_id: customerId,
+  customer_email: normalizedEmail,
+  customer_name: customerName,
+  address: address,
+  technician_name: technicianName,
+  inspection_date: inspectionDate,
+  notes: generalNotes,
+  service_types: serviceTypes,
+  selected_suggestions: selectedSuggestions,
+  system_readings: systemReadings
+})
   .select()
   .maybeSingle()
 
