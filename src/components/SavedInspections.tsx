@@ -176,10 +176,18 @@ export function SavedInspections({ onLoadInspection, onNewInspection }: SavedIns
         }
 
         .inspection-address {
-          color: #64748b;
-          font-size: 14px;
-          margin-bottom: 4px;
-        }
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.inspection-email {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 4px;
+  word-break: break-word;
+}
 
         .inspection-details {
           flex: 1;
