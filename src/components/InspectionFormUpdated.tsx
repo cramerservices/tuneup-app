@@ -94,6 +94,8 @@ const [systemReadings, setSystemReadings] = useState<SystemReadings>({
 const [saving, setSaving] = useState(false)
 const [saveMessage, setSaveMessage] = useState('')
 const [loading, setLoading] = useState(false)
+const [aiBusy, setAiBusy] = useState<string | null>(null)
+const [aiMessage, setAiMessage] = useState('')
 
   useEffect(() => {
     const testConnection = async () => {
@@ -270,6 +272,154 @@ setCustomerEmail(inspection.customer_email || '')
     const newItems = [...items]
     newItems[index].repairPrice = repairPrice
     setItems(newItems)
+  }
+
+
+  const fileToBase64 = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = String(reader.result || '')
+        resolve(result.includes(',') ? result.split(',')[1] : result)
+      }
+      reader.onerror = () => reject(reader.error || new Error('Unable to read image'))
+      reader.readAsDataURL(file)
+    })
+
+  const scanEquipmentPlate = async (index: number, file?: File | null) => {
+    if (!file) return
+
+    setAiBusy(`equipment-${index}`)
+    setAiMessage('Reading equipment plate with AI...')
+
+    try {
+      const imageBase64 = await fileToBase64(file)
+      const { data, error } = await supabase.functions.invoke('ai-read-tuneup-image', {
+        body: {
+          mode: 'equipment_plate',
+          serviceType: equipment[index]?.serviceType || '',
+          imageBase64,
+          mimeType: file.type || 'image/jpeg',
+        },
+      })
+
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'AI could not read the equipment plate')
+
+      const extracted = data.equipment || {}
+      const newEquipment = [...equipment]
+      newEquipment[index] = {
+        ...newEquipment[index],
+        brand: extracted.brand || newEquipment[index].brand,
+        modelNumber: extracted.modelNumber || newEquipment[index].modelNumber,
+        serialNumber: extracted.serialNumber || newEquipment[index].serialNumber,
+        age: extracted.age || newEquipment[index].age,
+      }
+
+      setEquipment(newEquipment)
+      setAiMessage(data.confidence ? `Equipment plate scanned. Confidence: ${data.confidence}` : 'Equipment plate scanned.')
+    } catch (error: any) {
+      console.error('Equipment AI scan failed:', error)
+      setAiMessage(`AI equipment scan failed: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setAiBusy(null)
+    }
+  }
+
+  const scanSystemReadings = async (file?: File | null) => {
+    if (!file) return
+
+    setAiBusy('system-readings')
+    setAiMessage('Reading system readings with AI...')
+
+    try {
+      const imageBase64 = await fileToBase64(file)
+      const { data, error } = await supabase.functions.invoke('ai-read-tuneup-image', {
+        body: {
+          mode: 'system_readings',
+          imageBase64,
+          mimeType: file.type || 'image/jpeg',
+        },
+      })
+
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'AI could not read the gauge or meter photo')
+
+      const extracted = data.systemReadings || {}
+      setSystemReadings(prev => ({
+        ...prev,
+        blowerCapacitor: extracted.blowerCapacitor || prev.blowerCapacitor,
+        blowerAmps: extracted.blowerAmps || prev.blowerAmps,
+        inducerMotorAmps: extracted.inducerMotorAmps || prev.inducerMotorAmps,
+        gasPressure: extracted.gasPressure || prev.gasPressure,
+        temperatureRise: extracted.temperatureRise || prev.temperatureRise,
+        returnAirTemp: extracted.returnAirTemp || prev.returnAirTemp,
+        supplyAirTemp: extracted.supplyAirTemp || prev.supplyAirTemp,
+        outdoorTemp: extracted.outdoorTemp || prev.outdoorTemp,
+        indoorWetBulb: extracted.indoorWetBulb || prev.indoorWetBulb,
+        lowSidePressure: extracted.lowSidePressure || prev.lowSidePressure,
+        highSidePressure: extracted.highSidePressure || prev.highSidePressure,
+        superheat: extracted.superheat || prev.superheat,
+        subcooling: extracted.subcooling || prev.subcooling,
+        compressorAmps: extracted.compressorAmps || prev.compressorAmps,
+        condenserFanAmps: extracted.condenserFanAmps || prev.condenserFanAmps,
+        capacitorHerm: extracted.capacitorHerm || prev.capacitorHerm,
+        capacitorFan: extracted.capacitorFan || prev.capacitorFan,
+        capacitorCommon: extracted.capacitorCommon || prev.capacitorCommon,
+      }))
+
+      setAiMessage(data.confidence ? `System readings scanned. Confidence: ${data.confidence}` : 'System readings scanned.')
+    } catch (error: any) {
+      console.error('System readings AI scan failed:', error)
+      setAiMessage(`AI system readings scan failed: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setAiBusy(null)
+    }
+  }
+
+  const generateIssueSummary = async () => {
+    setAiBusy('issue-summary')
+    setAiMessage('Generating customer-friendly issue summary...')
+
+    try {
+      const issueItems = items
+        .filter(item => item.severity > 0 || item.notes.trim() !== '')
+        .map(item => ({
+          itemName: item.itemName,
+          completed: item.completed,
+          notes: item.notes,
+          severity: item.severity,
+          repairPrice: item.repairPrice,
+        }))
+
+      if (issueItems.length === 0) {
+        setAiMessage('No issue notes or severity items found to summarize.')
+        return
+      }
+
+      const { data, error } = await supabase.functions.invoke('ai-generate-issue-summary', {
+        body: {
+          customerName,
+          address,
+          technicianName,
+          inspectionDate,
+          items: issueItems,
+          selectedSuggestions,
+          existingGeneralNotes: generalNotes,
+        },
+      })
+
+      if (error) throw error
+      if (!data?.success) throw new Error(data?.error || 'AI could not generate the summary')
+
+      setGeneralNotes(data.summary || '')
+      setAiMessage('Issue summary added to General Notes.')
+    } catch (error: any) {
+      console.error('Issue summary AI failed:', error)
+      setAiMessage(`AI summary failed: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setAiBusy(null)
+    }
   }
 
   const toggleSuggestion = (suggestion: string) => {
@@ -619,7 +769,22 @@ const { data: inspection, error: inspectionError } = await supabase
         <h2>Equipment Information</h2>
         {equipment.map((equip, index) => (
           <div key={index} className="equipment-card">
-            <h3 className="equipment-type-header">{getServiceTypeLabel(equip.serviceType)}</h3>
+            <div className="equipment-card-header">
+              <h3 className="equipment-type-header">{getServiceTypeLabel(equip.serviceType)}</h3>
+              <label className={`ai-upload-button ${aiBusy === `equipment-${index}` ? 'disabled' : ''}`}>
+                {aiBusy === `equipment-${index}` ? 'Scanning...' : 'Scan Equipment Plate'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  disabled={aiBusy !== null}
+                  onChange={(e) => {
+                    scanEquipmentPlate(index, e.target.files?.[0])
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            </div>
             <div className="form-grid">
               <div className="form-field">
                 <label>Brand</label>
@@ -678,7 +843,23 @@ const { data: inspection, error: inspectionError } = await supabase
         ))}
       </section>
 <section className="system-readings-section">
-  <h2>System Readings</h2>
+  <div className="section-title-row">
+    <h2>System Readings</h2>
+    <label className={`ai-upload-button no-export ${aiBusy === 'system-readings' ? 'disabled' : ''}`}>
+      {aiBusy === 'system-readings' ? 'Scanning...' : 'Scan Gauges / Meter'}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        disabled={aiBusy !== null}
+        onChange={(e) => {
+          scanSystemReadings(e.target.files?.[0])
+          e.target.value = ''
+        }}
+      />
+    </label>
+  </div>
+  {aiMessage && <div className="ai-message no-export">{aiMessage}</div>}
 
   <div className="readings-card">
     <h3 className="equipment-type-header">Furnace / Air Handler Readings</h3>
@@ -909,7 +1090,17 @@ const { data: inspection, error: inspectionError } = await supabase
       </section>
 
       <section className="general-notes-section">
-        <h2>General Notes</h2>
+        <div className="section-title-row">
+          <h2>General Notes</h2>
+          <button
+            type="button"
+            className="btn btn-secondary ai-summary-button no-export"
+            onClick={generateIssueSummary}
+            disabled={aiBusy !== null}
+          >
+            {aiBusy === 'issue-summary' ? 'Generating...' : 'Generate Issue Summary'}
+          </button>
+        </div>
         <textarea
           value={generalNotes}
           onChange={(e) => setGeneralNotes(e.target.value)}
