@@ -21,6 +21,7 @@ interface InspectionItem {
   itemName: string
   completed: boolean
   severity: number
+  repairPrice?: string | number | null
 }
 
 interface EquipmentInfo {
@@ -121,6 +122,18 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     const s = Number((item as any).severity ?? 0)
     return Number.isFinite(s) ? s : 0
   }
+  const getRepairPrice = (item: InspectionItem) => {
+    const value = (item as any).repairPrice ?? (item as any).repair_price ?? ''
+    const amount = Number(value)
+
+    if (!Number.isFinite(amount) || amount <= 0) return null
+
+    return amount.toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    })
+  }
+
 
   const checkedItems: InspectionItem[] = items.filter((i) => isCompleted(i))
   const incompleteItems: InspectionItem[] = items.filter((i) => !isCompleted(i))
@@ -242,6 +255,12 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                     <strong>Notes:</strong> {item.notes}
                   </div>
                 ) : null}
+
+                {sev >= 5 && getRepairPrice(item) ? (
+                  <div className="repair-price-display">
+                    <strong>Estimated Price to Fix:</strong> {getRepairPrice(item)}
+                  </div>
+                ) : null}
               </div>
             )
           })}
@@ -279,6 +298,12 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                 {item.notes ? (
                   <div className="issue-notes">
                     <strong>Notes:</strong> {item.notes}
+                  </div>
+                ) : null}
+
+                {sev >= 5 && getRepairPrice(item) ? (
+                  <div className="repair-price-display">
+                    <strong>Estimated Price to Fix:</strong> {getRepairPrice(item)}
                   </div>
                 ) : null}
               </div>
@@ -369,6 +394,12 @@ export const SummaryReport: FC<SummaryReportProps> = ({
               <div className="detailed-checklist-notes">
                 <strong>Notes:</strong> {item.notes?.trim() || '—'}
               </div>
+
+              {sev >= 5 && getRepairPrice(item) ? (
+                <div className="repair-price-display">
+                  <strong>Estimated Price to Fix:</strong> {getRepairPrice(item)}
+                </div>
+              ) : null}
             </div>
           )
         })}
