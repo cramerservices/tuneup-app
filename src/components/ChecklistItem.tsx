@@ -10,7 +10,7 @@ interface ChecklistItemProps {
   onNotesChange: (notes: string) => void
   onSeverityChange: (severity: number) => void
   onRepairPriceChange: (repairPrice: string) => void
-}
+} 
 
 const checklistQuickNotes: Record<string, { good: string; na: string }> = {
   'Thermostat Check': {
