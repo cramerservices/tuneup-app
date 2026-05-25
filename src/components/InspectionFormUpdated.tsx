@@ -8,6 +8,7 @@ interface ItemState {
   completed: boolean
   notes: string
   severity: number
+  repairPrice: string
 }
 
 interface EquipmentInfo {
@@ -188,7 +189,8 @@ setCustomerEmail(inspection.customer_email || '')
         itemName: item.item_name,
         completed: item.completed,
         notes: item.notes || '',
-        severity: item.severity || 0
+        severity: item.severity || 0,
+        repairPrice: item.repair_price !== null && item.repair_price !== undefined ? String(item.repair_price) : ''
       }))
 
       setItems(loadedItems)
@@ -235,7 +237,8 @@ setCustomerEmail(inspection.customer_email || '')
       itemName: item.item,
       completed: false,
       notes: '',
-      severity: 0
+      severity: 0,
+      repairPrice: ''
     }))
     setItems(initialItems)
   }, [serviceTypes])
@@ -255,6 +258,17 @@ setCustomerEmail(inspection.customer_email || '')
   const handleSeverityChange = (index: number, severity: number) => {
     const newItems = [...items]
     newItems[index].severity = severity
+
+    if (severity < 5) {
+      newItems[index].repairPrice = ''
+    }
+
+    setItems(newItems)
+  }
+
+  const handleRepairPriceChange = (index: number, repairPrice: string) => {
+    const newItems = [...items]
+    newItems[index].repairPrice = repairPrice
     setItems(newItems)
   }
 
@@ -447,6 +461,10 @@ const { data: inspection, error: inspectionError } = await supabase
         completed: item.completed,
         notes: item.notes,
         severity: item.severity,
+        repair_price:
+          item.severity >= 5 && item.repairPrice.trim() !== ''
+            ? Number(item.repairPrice)
+            : null,
         item_type: 'checklist'
       }))
 
@@ -862,9 +880,11 @@ const { data: inspection, error: inspectionError } = await supabase
               completed={item.completed}
               notes={item.notes}
               severity={item.severity}
+              repairPrice={item.repairPrice}
               onToggle={() => handleItemToggle(index)}
               onNotesChange={(notes) => handleNotesChange(index, notes)}
               onSeverityChange={(severity) => handleSeverityChange(index, severity)}
+              onRepairPriceChange={(repairPrice) => handleRepairPriceChange(index, repairPrice)}
             />
           ))}
         </div>
