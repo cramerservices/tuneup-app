@@ -27,6 +27,7 @@ interface ItemState {
   itemName: string
   completed: boolean
   severity: number
+  repairPrice?: string | number | null
 }
 
 interface EquipmentInfo {
