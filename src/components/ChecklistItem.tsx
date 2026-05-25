@@ -5,9 +5,11 @@ interface ChecklistItemProps {
   completed: boolean
   notes: string
   severity: number
+  repairPrice: string
   onToggle: () => void
   onNotesChange: (notes: string) => void
   onSeverityChange: (severity: number) => void
+  onRepairPriceChange: (repairPrice: string) => void
 }
 
 const checklistQuickNotes: Record<string, { good: string; na: string }> = {
@@ -174,9 +176,11 @@ export function ChecklistItem({
   completed,
   notes,
   severity,
+  repairPrice,
   onToggle,
   onNotesChange,
   onSeverityChange,
+  onRepairPriceChange,
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(false)
 
@@ -211,6 +215,7 @@ export function ChecklistItem({
     }
 
     onSeverityChange(0)
+    onRepairPriceChange('')
     setShowNotes(true)
 
     if (!completed) {
@@ -278,6 +283,27 @@ export function ChecklistItem({
               }}
             />
           </div>
+
+
+
+          {severity >= 5 && (
+            <div className="repair-price-section">
+              <label className="repair-price-label">Estimated Price to Fix:</label>
+              <div className="repair-price-input-wrap">
+                <span className="repair-price-dollar">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={repairPrice}
+                  onChange={(e) => onRepairPriceChange(e.target.value)}
+                  placeholder="Enter repair price"
+                  className="repair-price-input"
+                />
+              </div>
+              <p className="repair-price-help">This price will show on the customer PDF report.</p>
+            </div>
+          )}
 
           <div className="notes-section">
             <label className="notes-label">Notes:</label>
