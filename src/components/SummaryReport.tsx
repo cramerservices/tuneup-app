@@ -22,6 +22,8 @@ interface InspectionItem {
   completed: boolean
   severity: number
   repairPrice?: string | number | null
+  photoUrl?: string
+  photo_url?: string
 }
 
 interface EquipmentInfo {
@@ -132,6 +134,34 @@ export const SummaryReport: FC<SummaryReportProps> = ({
       style: 'currency',
       currency: 'USD',
     })
+  }
+
+  const getPhotoUrl = (item: InspectionItem) => {
+    return String((item as any).photoUrl || (item as any).photo_url || '').trim()
+  }
+
+  const renderItemPhoto = (item: InspectionItem) => {
+    const photoUrl = getPhotoUrl(item)
+
+    if (!photoUrl) return null
+
+    return (
+      <div className="summary-item-photo-wrap">
+        <img
+          src={photoUrl}
+          alt={`${item.itemName || item.label || 'Inspection item'} photo`}
+          className="summary-item-photo"
+          style={{
+            maxWidth: '260px',
+            width: '100%',
+            height: 'auto',
+            borderRadius: '10px',
+            border: '1px solid #e5e7eb',
+            display: 'block',
+          }}
+        />
+      </div>
+    )
   }
 
 
@@ -256,6 +286,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                   </div>
                 ) : null}
 
+                {renderItemPhoto(item)}
+
                 {sev >= 5 && getRepairPrice(item) ? (
                   <div className="repair-price-display">
                     <strong>Estimated Price to Fix:</strong> {getRepairPrice(item)}
@@ -300,6 +332,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                     <strong>Notes:</strong> {item.notes}
                   </div>
                 ) : null}
+
+                {renderItemPhoto(item)}
 
                 {sev >= 5 && getRepairPrice(item) ? (
                   <div className="repair-price-display">
@@ -350,6 +384,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                     <strong>Notes:</strong> {item.notes}
                   </div>
                 ) : null}
+
+                {renderItemPhoto(item)}
               </div>
             )
           })}
@@ -394,6 +430,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
               <div className="detailed-checklist-notes">
                 <strong>Notes:</strong> {item.notes?.trim() || '—'}
               </div>
+
+              {renderItemPhoto(item)}
 
               {sev >= 5 && getRepairPrice(item) ? (
                 <div className="repair-price-display">
@@ -455,6 +493,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
                     <strong>Notes:</strong> {item.notes}
                   </div>
                 ) : null}
+
+                {renderItemPhoto(item)}
               </div>
             )
           })}
