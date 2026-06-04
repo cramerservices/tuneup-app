@@ -9,6 +9,7 @@ interface ItemState {
   notes: string
   severity: number
   repairPrice: string
+  photoUrl?: string
 }
 
 interface EquipmentInfo {
@@ -192,7 +193,8 @@ setCustomerEmail(inspection.customer_email || '')
         completed: item.completed,
         notes: item.notes || '',
         severity: item.severity || 0,
-        repairPrice: item.repair_price !== null && item.repair_price !== undefined ? String(item.repair_price) : ''
+        repairPrice: item.repair_price !== null && item.repair_price !== undefined ? String(item.repair_price) : '',
+        photoUrl: item.photo_url || ''
       }))
 
       setItems(loadedItems)
@@ -240,7 +242,8 @@ setCustomerEmail(inspection.customer_email || '')
       completed: false,
       notes: '',
       severity: 0,
-      repairPrice: ''
+      repairPrice: '',
+      photoUrl: ''
     }))
     setItems(initialItems)
   }, [serviceTypes])
@@ -272,6 +275,53 @@ setCustomerEmail(inspection.customer_email || '')
     const newItems = [...items]
     newItems[index].repairPrice = repairPrice
     setItems(newItems)
+  }
+
+  const uploadChecklistPhoto = async (index: number, file?: File | null) => {
+    if (!file) return
+
+    try {
+      setSaveMessage('Uploading photo...')
+
+      const fileExt = file.name.split('.').pop() || 'jpg'
+      const safeItemName = items[index].itemName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+
+      const uniqueId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : String(Date.now())
+
+      const filePath = `checklist-items/${uniqueId}-${safeItemName}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('inspection-photos')
+        .upload(filePath, file, {
+          contentType: file.type || 'image/jpeg',
+          upsert: true,
+        })
+
+      if (uploadError) throw uploadError
+
+      const publicUrl = supabase.storage
+        .from('inspection-photos')
+        .getPublicUrl(filePath)?.data?.publicUrl
+
+      if (!publicUrl) {
+        throw new Error('Could not create photo URL.')
+      }
+
+      const newItems = [...items]
+      newItems[index].photoUrl = publicUrl
+      setItems(newItems)
+
+      setSaveMessage('Photo uploaded successfully.')
+    } catch (error: any) {
+      console.error('Checklist photo upload failed:', error)
+      setSaveMessage(`Photo upload failed: ${error?.message || 'Unknown error'}`)
+    }
   }
 
 
@@ -615,6 +665,7 @@ const { data: inspection, error: inspectionError } = await supabase
           item.severity >= 5 && item.repairPrice.trim() !== ''
             ? Number(item.repairPrice)
             : null,
+        photo_url: item.photoUrl || null,
         item_type: 'checklist'
       }))
 
@@ -1062,10 +1113,12 @@ const { data: inspection, error: inspectionError } = await supabase
               notes={item.notes}
               severity={item.severity}
               repairPrice={item.repairPrice}
+              photoUrl={item.photoUrl}
               onToggle={() => handleItemToggle(index)}
               onNotesChange={(notes) => handleNotesChange(index, notes)}
               onSeverityChange={(severity) => handleSeverityChange(index, severity)}
               onRepairPriceChange={(repairPrice) => handleRepairPriceChange(index, repairPrice)}
+              onPhotoUpload={(file) => uploadChecklistPhoto(index, file)}
             />
           ))}
         </div>
