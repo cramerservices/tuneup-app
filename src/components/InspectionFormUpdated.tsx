@@ -10,7 +10,7 @@ interface ItemState {
   severity: number
   repairPrice: string
   photoUrl?: string
-}
+} 
 
 interface EquipmentInfo {
   serviceType: string
