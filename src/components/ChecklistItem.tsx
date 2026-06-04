@@ -6,10 +6,12 @@ interface ChecklistItemProps {
   notes: string
   severity: number
   repairPrice: string
+  photoUrl?: string
   onToggle: () => void
   onNotesChange: (notes: string) => void
   onSeverityChange: (severity: number) => void
   onRepairPriceChange: (repairPrice: string) => void
+  onPhotoUpload?: (file?: File | null) => void
 } 
 
 const checklistQuickNotes: Record<string, { good: string; na: string }> = {
@@ -177,10 +179,12 @@ export function ChecklistItem({
   notes,
   severity,
   repairPrice,
+  photoUrl,
   onToggle,
   onNotesChange,
   onSeverityChange,
   onRepairPriceChange,
+  onPhotoUpload,
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(false)
 
@@ -253,6 +257,20 @@ export function ChecklistItem({
             N/A
           </button>
 
+          <label className="quick-note-btn">
+            {photoUrl ? 'Replace Photo' : 'Add Photo'}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                onPhotoUpload?.(e.target.files?.[0])
+                e.target.value = ''
+              }}
+            />
+          </label>
+
           <button
             type="button"
             onClick={() => setShowNotes(!showNotes)}
@@ -265,6 +283,23 @@ export function ChecklistItem({
 
       {showNotes && (
         <div className="item-details">
+          {photoUrl ? (
+            <div className="checklist-photo-preview">
+              <label className="notes-label">Photo:</label>
+              <img
+                src={photoUrl}
+                alt={`${itemName} photo`}
+                style={{
+                  maxWidth: '220px',
+                  width: '100%',
+                  borderRadius: '10px',
+                  border: '1px solid #e5e7eb',
+                  marginTop: '8px',
+                }}
+              />
+            </div>
+          ) : null}
+
           <div className="severity-section">
             <label className="severity-label">
               Severity: <strong>{getSeverityLabel(severity)}</strong> ({severity}/10)
