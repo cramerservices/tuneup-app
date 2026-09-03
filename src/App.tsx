@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { FC, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 
@@ -8,26 +8,27 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 import { ServiceSelection } from './components/ServiceSelection'
-import * as InspectionFormModule from './components/InspectionFormUpdated'
+import { InspectionFormUpdated as InspectionForm } from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
 import { MaintenancePlansPage } from './components/MaintenancePlansPage'
 import { SavedInspections } from './components/SavedInspections'
 
 import './App.css'
 
-const InspectionForm = ((InspectionFormModule as any).InspectionFormUpdated ??
-  (InspectionFormModule as any).default) as FC<any>
-
 interface ItemState {
-  id: string
-  label: string
-  checked: boolean
-  issueFound: boolean
+  id?: string
+  label?: string
+  checked?: boolean
+  issueFound?: boolean
   notes?: string
   itemName: string
   completed: boolean
   severity: number
   repairPrice?: string | number | null
+  photoUrls?: string[]
+  photo_urls?: string[]
+  photoUrl?: string
+  photo_url?: string
 }
 
 interface EquipmentInfo {

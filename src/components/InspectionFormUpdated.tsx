@@ -9,7 +9,7 @@ interface ItemState {
   notes: string
   severity: number
   repairPrice: string
-  photoUrl?: string
+  photoUrls: string[]
 } 
 
 interface EquipmentInfo {
@@ -194,7 +194,12 @@ setCustomerEmail(inspection.customer_email || '')
         notes: item.notes || '',
         severity: item.severity || 0,
         repairPrice: item.repair_price !== null && item.repair_price !== undefined ? String(item.repair_price) : '',
-        photoUrl: item.photo_url || ''
+        photoUrls: Array.from(
+          new Set([
+            ...((Array.isArray(item.photo_urls) ? item.photo_urls : []) as string[]),
+            ...(item.photo_url ? [item.photo_url] : []),
+          ].filter(Boolean))
+        )
       }))
 
       setItems(loadedItems)
@@ -243,7 +248,7 @@ setCustomerEmail(inspection.customer_email || '')
       notes: '',
       severity: 0,
       repairPrice: '',
-      photoUrl: ''
+      photoUrls: []
     }))
     setItems(initialItems)
   }, [serviceTypes])
@@ -277,50 +282,79 @@ setCustomerEmail(inspection.customer_email || '')
     setItems(newItems)
   }
 
-  const uploadChecklistPhoto = async (index: number, file?: File | null) => {
-    if (!file) return
+  const uploadChecklistPhotos = async (index: number, files: File[]) => {
+    if (!files.length) return
 
     try {
-      setSaveMessage('Uploading photo...')
+      const invalidFile = files.find((file) => !file.type.startsWith('image/') || file.size > 10 * 1024 * 1024)
+      if (invalidFile) {
+        throw new Error('Each photo must be an image smaller than 10 MB.')
+      }
 
-      const fileExt = file.name.split('.').pop() || 'jpg'
+      setSaveMessage(`Uploading ${files.length} photo${files.length === 1 ? '' : 's'}...`)
+
       const safeItemName = items[index].itemName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
 
-      const uniqueId =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : String(Date.now())
+      const uploadedUrls = await Promise.all(files.map(async (file) => {
+        const fileExt = file.name.split('.').pop() || 'jpg'
+        const uniqueId =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        const filePath = `checklist-items/${uniqueId}-${safeItemName}.${fileExt}`
 
-      const filePath = `checklist-items/${uniqueId}-${safeItemName}.${fileExt}`
+        const { error: uploadError } = await supabase.storage
+          .from('inspection-photos')
+          .upload(filePath, file, {
+            contentType: file.type || 'image/jpeg',
+            upsert: false,
+          })
 
-      const { error: uploadError } = await supabase.storage
-        .from('inspection-photos')
-        .upload(filePath, file, {
-          contentType: file.type || 'image/jpeg',
-          upsert: true,
-        })
+        if (uploadError) throw uploadError
 
-      if (uploadError) throw uploadError
+        const publicUrl = supabase.storage
+          .from('inspection-photos')
+          .getPublicUrl(filePath)?.data?.publicUrl
 
-      const publicUrl = supabase.storage
-        .from('inspection-photos')
-        .getPublicUrl(filePath)?.data?.publicUrl
+        if (!publicUrl) throw new Error('Could not create photo URL.')
+        return publicUrl
+      }))
 
-      if (!publicUrl) {
-        throw new Error('Could not create photo URL.')
-      }
+      setItems((currentItems) => currentItems.map((item, itemIndex) =>
+        itemIndex === index
+          ? { ...item, photoUrls: [...item.photoUrls, ...uploadedUrls] }
+          : item
+      ))
 
-      const newItems = [...items]
-      newItems[index].photoUrl = publicUrl
-      setItems(newItems)
-
-      setSaveMessage('Photo uploaded successfully.')
+      setSaveMessage(`${uploadedUrls.length} photo${uploadedUrls.length === 1 ? '' : 's'} uploaded successfully.`)
     } catch (error: any) {
       console.error('Checklist photo upload failed:', error)
       setSaveMessage(`Photo upload failed: ${error?.message || 'Unknown error'}`)
+    }
+  }
+
+  const removeChecklistPhoto = async (index: number, photoUrl: string) => {
+    try {
+      const marker = '/storage/v1/object/public/inspection-photos/'
+      const markerIndex = photoUrl.indexOf(marker)
+      if (markerIndex >= 0) {
+        const filePath = decodeURIComponent(photoUrl.slice(markerIndex + marker.length))
+        const { error } = await supabase.storage.from('inspection-photos').remove([filePath])
+        if (error) throw error
+      }
+
+      setItems((currentItems) => currentItems.map((item, itemIndex) =>
+        itemIndex === index
+          ? { ...item, photoUrls: item.photoUrls.filter((url) => url !== photoUrl) }
+          : item
+      ))
+      setSaveMessage('Photo removed.')
+    } catch (error: any) {
+      console.error('Checklist photo removal failed:', error)
+      setSaveMessage(`Could not remove photo: ${error?.message || 'Unknown error'}`)
     }
   }
 
@@ -665,7 +699,8 @@ const { data: inspection, error: inspectionError } = await supabase
           item.severity >= 5 && item.repairPrice.trim() !== ''
             ? Number(item.repairPrice)
             : null,
-        photo_url: item.photoUrl || null,
+        photo_url: item.photoUrls[0] || null,
+        photo_urls: item.photoUrls,
         item_type: 'checklist'
       }))
 
@@ -1113,12 +1148,13 @@ const { data: inspection, error: inspectionError } = await supabase
               notes={item.notes}
               severity={item.severity}
               repairPrice={item.repairPrice}
-              photoUrl={item.photoUrl}
+              photoUrls={item.photoUrls}
               onToggle={() => handleItemToggle(index)}
               onNotesChange={(notes) => handleNotesChange(index, notes)}
               onSeverityChange={(severity) => handleSeverityChange(index, severity)}
               onRepairPriceChange={(repairPrice) => handleRepairPriceChange(index, repairPrice)}
-              onPhotoUpload={(file) => uploadChecklistPhoto(index, file)}
+              onPhotoUpload={(files) => uploadChecklistPhotos(index, files)}
+              onPhotoRemove={(photoUrl) => removeChecklistPhoto(index, photoUrl)}
             />
           ))}
         </div>

@@ -6,12 +6,13 @@ interface ChecklistItemProps {
   notes: string
   severity: number
   repairPrice: string
-  photoUrl?: string
+  photoUrls?: string[]
   onToggle: () => void
   onNotesChange: (notes: string) => void
   onSeverityChange: (severity: number) => void
   onRepairPriceChange: (repairPrice: string) => void
-  onPhotoUpload?: (file?: File | null) => void
+  onPhotoUpload?: (files: File[]) => void
+  onPhotoRemove?: (photoUrl: string) => void
 } 
 
 const checklistQuickNotes: Record<string, { good: string; na: string }> = {
@@ -179,12 +180,13 @@ export function ChecklistItem({
   notes,
   severity,
   repairPrice,
-  photoUrl,
+  photoUrls = [],
   onToggle,
   onNotesChange,
   onSeverityChange,
   onRepairPriceChange,
   onPhotoUpload,
+  onPhotoRemove,
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(false)
 
@@ -258,14 +260,15 @@ export function ChecklistItem({
           </button>
 
           <label className="quick-note-btn">
-            {photoUrl ? 'Replace Photo' : 'Add Photo'}
+            {photoUrls.length ? `Add Photos (${photoUrls.length})` : 'Add Photos'}
             <input
               type="file"
               accept="image/*"
               capture="environment"
+              multiple
               style={{ display: 'none' }}
               onChange={(e) => {
-                onPhotoUpload?.(e.target.files?.[0])
+                onPhotoUpload?.(Array.from(e.target.files || []))
                 e.target.value = ''
               }}
             />
@@ -283,20 +286,26 @@ export function ChecklistItem({
 
       {showNotes && (
         <div className="item-details">
-          {photoUrl ? (
+          {photoUrls.length ? (
             <div className="checklist-photo-preview">
-              <label className="notes-label">Photo:</label>
-              <img
-                src={photoUrl}
-                alt={`${itemName} photo`}
-                style={{
-                  maxWidth: '220px',
-                  width: '100%',
-                  borderRadius: '10px',
-                  border: '1px solid #e5e7eb',
-                  marginTop: '8px',
-                }}
-              />
+              <label className="notes-label">Photos ({photoUrls.length}):</label>
+              <div className="checklist-photo-grid">
+                {photoUrls.map((photoUrl, index) => (
+                  <div className="checklist-photo-card" key={`${photoUrl}-${index}`}>
+                    <a href={photoUrl} target="_blank" rel="noreferrer">
+                      <img src={photoUrl} alt={`${itemName} photo ${index + 1}`} />
+                    </a>
+                    <button
+                      type="button"
+                      className="checklist-photo-remove"
+                      onClick={() => onPhotoRemove?.(photoUrl)}
+                      aria-label={`Remove photo ${index + 1} from ${itemName}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

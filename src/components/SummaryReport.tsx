@@ -24,6 +24,8 @@ interface InspectionItem {
   repairPrice?: string | number | null
   photoUrl?: string
   photo_url?: string
+  photoUrls?: string[]
+  photo_urls?: string[]
 }
 
 interface EquipmentInfo {
@@ -136,30 +138,34 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     })
   }
 
-  const getPhotoUrl = (item: InspectionItem) => {
-    return String((item as any).photoUrl || (item as any).photo_url || '').trim()
+  const getPhotoUrls = (item: InspectionItem) => {
+    const urls = [
+      ...(Array.isArray(item.photoUrls) ? item.photoUrls : []),
+      ...(Array.isArray(item.photo_urls) ? item.photo_urls : []),
+      item.photoUrl,
+      item.photo_url,
+    ]
+      .map((url) => String(url || '').trim())
+      .filter(Boolean)
+
+    return Array.from(new Set(urls))
   }
 
   const renderItemPhoto = (item: InspectionItem) => {
-    const photoUrl = getPhotoUrl(item)
+    const photoUrls = getPhotoUrls(item)
 
-    if (!photoUrl) return null
+    if (!photoUrls.length) return null
 
     return (
       <div className="summary-item-photo-wrap">
-        <img
-          src={photoUrl}
-          alt={`${item.itemName || item.label || 'Inspection item'} photo`}
-          className="summary-item-photo"
-          style={{
-            maxWidth: '260px',
-            width: '100%',
-            height: 'auto',
-            borderRadius: '10px',
-            border: '1px solid #e5e7eb',
-            display: 'block',
-          }}
-        />
+        {photoUrls.map((photoUrl, index) => (
+          <img
+            key={`${photoUrl}-${index}`}
+            src={photoUrl}
+            alt={`${item.itemName || item.label || 'Inspection item'} photo ${index + 1}`}
+            className="summary-item-photo"
+          />
+        ))}
       </div>
     )
   }
