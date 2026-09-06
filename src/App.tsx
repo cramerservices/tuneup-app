@@ -159,36 +159,91 @@ function TechAuthGate({ children }: { children: ReactNode }) {
     setAuthBusy(false)
   }
 
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>
+  if (loading) {
+    return (
+      <main className="auth-shell">
+        <div className="auth-loading" role="status" aria-live="polite">
+          <span className="auth-spinner" aria-hidden="true" />
+          <span>Preparing technician access…</span>
+        </div>
+      </main>
+    )
+  }
 
   if (!sessionUserId) {
     return (
-      <div style={{ maxWidth: 420, margin: '40px auto', padding: 16 }}>
-        <h2 style={{ marginBottom: 12 }}>Tech Login</h2>
-        <p style={{ marginTop: 0, opacity: 0.8 }}>
-          This app uploads PDFs to a private bucket, so techs must log in.
-        </p>
+      <main className="auth-shell">
+        <section className="auth-card" aria-labelledby="tech-login-title">
+          <div className="auth-brand">
+            <img src="/CramerLogoText.png" alt="Cramer Services" />
+            <span className="auth-app-label">HVAC Tune-Up Checklist</span>
+          </div>
 
-        <div style={{ display: 'grid', gap: 10 }}>
-          <input
-            placeholder="Tech email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            placeholder="Tech password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-          />
+          <div className="auth-heading">
+            <span className="auth-lock" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10m-10 0h11a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Zm5.5 4.5v2" />
+              </svg>
+            </span>
+            <div>
+              <p className="auth-eyebrow">Staff access</p>
+              <h1 id="tech-login-title">Welcome back</h1>
+              <p>Sign in to start or review an HVAC inspection.</p>
+            </div>
+          </div>
 
-          <button onClick={signIn} disabled={authBusy} style={{ padding: 10 }}>
-            {authBusy ? 'Signing in…' : 'Sign in'}
-          </button>
+          <form
+            className="auth-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (!authBusy) signIn()
+            }}
+          >
+            <label htmlFor="tech-email">Email address</label>
+            <input
+              id="tech-email"
+              name="email"
+              type="email"
+              placeholder="name@cramerservices.com"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-          {error && <div style={{ color: 'crimson' }}>{error}</div>}
-        </div>
-      </div>
+            <label htmlFor="tech-password">Password</label>
+            <input
+              id="tech-password"
+              name="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              autoComplete="current-password"
+              required
+            />
+
+            {error && (
+              <div className="auth-error" role="alert">
+                <span aria-hidden="true">!</span>
+                <p>{error}</p>
+              </div>
+            )}
+
+            <button className="auth-submit" type="submit" disabled={authBusy}>
+              {authBusy ? (
+                <><span className="auth-button-spinner" aria-hidden="true" /> Signing in…</>
+              ) : (
+                <>Sign in <span aria-hidden="true">→</span></>
+              )}
+            </button>
+          </form>
+
+          <p className="auth-security-note">
+            Authorized Cramer Services technicians only
+          </p>
+        </section>
+      </main>
     )
   }
 
