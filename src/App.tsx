@@ -325,9 +325,9 @@ const handleSendEmail = async () => {
 
     const pdfBase64 = pdf.output('datauristring').split(',')[1]
 
-    const { data, error } = await supabase.functions.invoke('send-estimate-email', {
+    const { data, error } = await supabase.functions.invoke('send-tuneup-email', {
       body: {
-        to: summaryData.customerEmail,
+        to: summaryData.customerEmail.trim(),
         customerName: summaryData.customerName,
         inspectionDate: summaryData.inspectionDate,
         technicianName: summaryData.technicianName,
@@ -337,9 +337,17 @@ const handleSendEmail = async () => {
       },
     })
 
-    if (error) throw error
-
-    console.log('Email function response:', data)
+    if (error) {
+      let detail = error.message
+      try {
+        const response = await (error as any).context?.json()
+        detail = response?.error || response?.message || detail
+      } catch { /* Keep the original error if no JSON response is available. */ }
+      throw new Error(detail)
+    }
+    if (!data?.success || !data?.id) {
+      throw new Error(data?.error || 'The email service did not confirm the send.')
+    }
     setMessage('Email sent!')
   } catch (err: any) {
     console.error('Email failed:', err)
