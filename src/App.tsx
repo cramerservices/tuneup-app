@@ -5,7 +5,7 @@ import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-do
 
 import { supabase } from './lib/supabase'
 import html2canvas from 'html2canvas'
-import jsPDF from 'jspdf'
+import { createReportPdf } from './lib/reportPdf'
 
 import { ServiceSelection } from './components/ServiceSelection'
 import { InspectionFormUpdated as InspectionForm } from './components/InspectionFormUpdated'
@@ -287,6 +287,9 @@ function InspectionWrapper({ initialInspectionId }: { initialInspectionId?: stri
   }
 
 const handleSendEmail = async () => {
+  if (isSendingEmail) return
+  const controller = new AbortController()
+  let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     setIsSendingEmail(true)
     setMessage(null)
@@ -304,28 +307,21 @@ const handleSendEmail = async () => {
       throw new Error('Could not find report content to email.')
     }
 
-    const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
-    const imgData = canvas.toDataURL('image/png')
-
-    const pdf = new jsPDF('p', 'pt', 'letter')
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-
-    const imgWidth = pageWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-    let position = 0
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-
-    while (imgHeight + position > pageHeight) {
-      position -= pageHeight
-      pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-    }
+    setMessage('Preparing report PDF…')
+    const canvas = await html2canvas(reportEl, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff', imageTimeout: 10000 })
+    const pdf = createReportPdf(canvas)
+    canvas.width = 0
+    canvas.height = 0
 
     const pdfBase64 = pdf.output('datauristring').split(',')[1]
 
+    if (pdfBase64.length > 20 * 1024 * 1024) {
+      throw new Error('Report is too large to email. Reduce the number of photos and try again.')
+    }
+    setMessage(`Sending report to ${summaryData.customerEmail.trim()}…`)
+    timeout = setTimeout(() => controller.abort(), 45000)
     const { data, error } = await supabase.functions.invoke('send-tuneup-email', {
+      signal: controller.signal,
       body: {
         to: summaryData.customerEmail.trim(),
         customerName: summaryData.customerName,
@@ -348,11 +344,14 @@ const handleSendEmail = async () => {
     if (!data?.success || !data?.id) {
       throw new Error(data?.error || 'The email service did not confirm the send.')
     }
-    setMessage('Email sent!')
+    setMessage(`Email sent to ${summaryData.customerEmail.trim()}.`)
   } catch (err: any) {
     console.error('Email failed:', err)
-    setMessage(`Email failed: ${err?.message ?? String(err)}`)
+    setMessage(controller.signal.aborted
+      ? 'Email request timed out. Delivery is unconfirmed; check the inbox before retrying.'
+      : `Email failed: ${err?.message ?? String(err)}`)
   } finally {
+    if (timeout) clearTimeout(timeout)
     setIsSendingEmail(false)
   }
 }
@@ -374,24 +373,10 @@ const handleExportPDF = async () => {
       return
     }
 
-    const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true })
-    const imgData = canvas.toDataURL('image/png')
-
-    const pdf = new jsPDF('p', 'pt', 'letter')
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-
-    const imgWidth = pageWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-    let position = 0
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-
-    while (imgHeight + position > pageHeight) {
-      position -= pageHeight
-      pdf.addPage()
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-    }
+    const canvas = await html2canvas(reportEl, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff', imageTimeout: 10000 })
+    const pdf = createReportPdf(canvas)
+    canvas.width = 0
+    canvas.height = 0
 
     pdf.save('tuneup-summary.pdf')
     setMessage('PDF exported.')
@@ -407,7 +392,7 @@ const handleExportPDF = async () => {
 
   return (
     <div className="app">
-      {message && (
+      {message && currentStep !== 'summary' && (
         <div style={{ padding: 10, marginBottom: 10, background: '#f3f3f3' }}>
           {message}
         </div>
@@ -441,6 +426,7 @@ const handleExportPDF = async () => {
           onSendEmail={handleSendEmail}
           onExportPDF={handleExportPDF}
           isSending={isSendingEmail}
+          actionMessage={message}
         />
       )}
     </div>
