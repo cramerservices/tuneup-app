@@ -77,6 +77,7 @@ interface SummaryReportProps {
   onExportPDF: () => void
   onSendEmail?: () => Promise<void> | void
   isSending?: boolean
+  actionMessage?: string | null
 }
 
 export const SummaryReport: FC<SummaryReportProps> = ({
@@ -85,6 +86,7 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   onExportPDF,
   onSendEmail,
   isSending,
+  actionMessage,
 }) => {
   const reportRef = useRef<HTMLDivElement | null>(null)
   const [showDetailedReport, setShowDetailedReport] = useState(false)
@@ -899,6 +901,11 @@ export const SummaryReport: FC<SummaryReportProps> = ({
         {showDetailedReport ? renderDetailedChecklist() : renderSimpleChecklist()}
       </div>
 
+      {actionMessage && (
+        <div role="status" aria-live="polite" style={{ padding: 16, marginBottom: 12, background: '#f3f3f3', overflowWrap: 'anywhere' }}>
+          {actionMessage}
+        </div>
+      )}
       <div className="summary-actions">
         <button onClick={onBack} className="btn btn-secondary" type="button">
           Back to Inspection
