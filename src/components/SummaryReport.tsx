@@ -9,8 +9,7 @@ import { InvoicePrint } from './InvoicePrint'
 import html2pdf from 'html2pdf.js'
 import { supabase } from '../lib/supabase'
 
-const InvoiceModalAny = InvoiceModal as unknown as FC<any>
-const InvoicePrintAny = InvoicePrint as unknown as FC<any>
+import type { InvoiceDraft, InvoiceChoice } from '../../supabase/functions/_shared/invoice'
 
 interface InspectionItem {
   id?: string
@@ -59,6 +58,7 @@ interface SystemReadings {
 }
 
 interface SummaryDataLike {
+  inspectionId?: string
   customerName?: string
   address?: string
   technicianName?: string
@@ -92,8 +92,11 @@ export const SummaryReport: FC<SummaryReportProps> = ({
   const [showDetailedReport, setShowDetailedReport] = useState(false)
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
-  const [invoiceData, setInvoiceData] = useState<any>(null)
-  const [showInvoicePrint, setShowInvoicePrint] = useState(false)
+  const [billingResult, setBillingResult] = useState<any>(null)
+  const [billingDraft, setBillingDraft] = useState<InvoiceDraft>({ choices: [] })
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMessage, setBillingMessage] = useState('')
+  const [invoiceSendMode, setInvoiceSendMode] = useState(false)
 
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -513,49 +516,73 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     </div>
   )
 
-  const handleGenerateInvoice = async (generated: any) => {
-    try {
-      setInvoiceData(generated)
-      setShowInvoiceModal(false)
-      setShowInvoicePrint(true)
-
-      const lineItems = buildCrmInvoiceLineItems(generated)
-
-      if (!customerEmail) {
-        throw new Error('Customer email is required to create a CRM invoice.')
-      }
-
-      if (lineItems.length === 0) {
-        throw new Error('Add at least one invoice line item before generating.')
-      }
-
-      const { data: invoiceResult, error: invoiceError } = await supabase.rpc(
-        'create_crm_invoice_from_tuneup',
-        {
-          p_email: customerEmail,
-          p_full_name: customerName || null,
-          p_phone: null,
-          p_service_address: address || null,
-          p_city: null,
-          p_state: null,
-          p_zip_code: null,
-          p_invoice_date: inspectionDate || new Date().toISOString().slice(0, 10),
-          p_due_date: inspectionDate || new Date().toISOString().slice(0, 10),
-          p_work_completed_date: inspectionDate || new Date().toISOString().slice(0, 10),
-          p_tech_name: technicianName || null,
-          p_notes: generalNotes || null,
-          p_line_items: lineItems,
-        }
-      )
-
-      if (invoiceError) throw invoiceError
-
-      console.log('CRM invoice created', invoiceResult)
-      alert(`CRM invoice created ✅ ${invoiceResult?.invoice_number || ''}`)
-    } catch (err: any) {
-      console.error('Failed to create CRM invoice:', err)
-      alert(err?.message || 'Failed to create CRM invoice')
+  const callBilling = async (action: string, draft?: InvoiceDraft) => {
+    if (!data.inspectionId) throw new Error('Save this inspection again before creating an invoice.')
+    const { data: result, error } = await supabase.functions.invoke('tuneup-invoice', {
+      body: { action, inspectionId: data.inspectionId, draft },
+    })
+    if (error) {
+      let detail = error.message
+      try { const body = await (error as any).context?.json(); detail = body?.error || body?.message || detail } catch { /* preserve original */ }
+      throw new Error(detail)
     }
+    if (!result?.success) throw new Error(result?.error || 'Invoice operation was not confirmed.')
+    return result
+  }
+
+  const initialInvoiceDraft = (): InvoiceDraft => {
+    const choices: InvoiceChoice[] = [
+      { id: 'service-furnace', kind: 'service', description: 'Furnace Tune-Up', price: 125, approval: 'pending' },
+      { id: 'service-ac', kind: 'service', description: 'AC/Heat Pump Service', price: 125, approval: 'pending' },
+      { id: 'service-water', kind: 'service', description: 'Hot Water Tank Service', price: 125, approval: 'pending' },
+    ]
+    items.filter(i => Number(i.repairPrice) > 0 || getSeverity(i) > 0).forEach((item, index) => choices.push({
+      id: `repair-${item.itemName}-${index}`, kind: 'repair', description: `Repair: ${item.label || item.itemName}`,
+      price: Number(item.repairPrice) || 0, approval: 'pending',
+    }))
+    selectedSuggestions.forEach(id => choices.push({ id: `addon-${id}`, kind: 'addon', description: getSuggestionInfo(id).title, price: getSuggestionInfo(id).price, approval: 'pending' }))
+    return { choices }
+  }
+
+  const openInvoice = async (sendEmail: boolean) => {
+    setBillingBusy(true); setBillingMessage('Loading invoice…')
+    try {
+      const result = await callBilling('get')
+      setBillingResult(result)
+      if (result.invoice) {
+        if (sendEmail) {
+          setBillingMessage(`Sending invoice to ${result.recipient}…`)
+          const sent = await callBilling('send')
+          setBillingResult(sent)
+          setBillingMessage(`Invoice ${sent.invoice.invoice_number} and payment link emailed to ${sent.recipient}.`)
+        } else setBillingMessage(`Invoice ${result.invoice.invoice_number} is ready below.`)
+      } else {
+        const fresh = initialInvoiceDraft()
+        const saved = result.draft?.choices || []
+        const defaults = new Map(fresh.choices.map(c => [c.id, c]))
+        setBillingDraft({ choices: [...fresh.choices.map(c => saved.find((s: InvoiceChoice) => s.id === c.id) || c), ...saved.filter((c: InvoiceChoice) => c.kind === 'additional' && !defaults.has(c.id))] })
+        setInvoiceSendMode(sendEmail); setShowInvoiceModal(true); setBillingMessage('')
+      }
+    } catch (error: any) { setBillingMessage(error.message) }
+    finally { setBillingBusy(false) }
+  }
+
+  const saveInvoice = async (draft: InvoiceDraft, action: 'save' | 'generate' | 'send') => {
+    const result = await callBilling(action, draft)
+    setBillingResult(result)
+    setBillingMessage(action === 'send' ? `Invoice ${result.invoice.invoice_number} and payment link emailed to ${result.recipient}.` : action === 'save' ? 'Approval selections saved.' : `Invoice ${result.invoice.invoice_number} created. You can now email it with a payment link.`)
+  }
+
+  const downloadInvoice = async () => {
+    setBillingBusy(true)
+    try {
+      const result = await callBilling('pdf')
+      const bytes = Uint8Array.from(atob(result.pdfBase64), c => c.charCodeAt(0))
+      const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }))
+      const link = document.createElement('a'); link.href = url; link.download = `invoice-${result.invoice.invoice_number}.pdf`; link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (error: any) { setBillingMessage(error.message) }
+    finally { setBillingBusy(false) }
   }
 
   const generatePdfBlob = async (): Promise<Blob> => {
@@ -586,64 +613,6 @@ export const SummaryReport: FC<SummaryReportProps> = ({
     } catch {
       return ''
     }
-  }
-
-  const buildCrmInvoiceLineItems = (invoiceData: any) => {
-    const items: Array<{
-      description: string
-      material_cost: number
-      labor_cost: number
-      total_cost: number
-    }> = []
-
-    if (invoiceData?.services?.furnace) {
-      items.push({
-        description: 'Furnace Tune-Up',
-        material_cost: 0,
-        labor_cost: Number(invoiceData.services.furnacePrice || 0),
-        total_cost: Number(invoiceData.services.furnacePrice || 0),
-      })
-    }
-
-    if (invoiceData?.services?.ac) {
-      items.push({
-        description: 'AC/Heat Pump Service',
-        material_cost: 0,
-        labor_cost: Number(invoiceData.services.acPrice || 0),
-        total_cost: Number(invoiceData.services.acPrice || 0),
-      })
-    }
-
-    if (invoiceData?.services?.hot_water_tank) {
-      items.push({
-        description: 'Hot Water Tank Service',
-        material_cost: 0,
-        labor_cost: Number(invoiceData.services.hotWaterPrice || 0),
-        total_cost: Number(invoiceData.services.hotWaterPrice || 0),
-      })
-    }
-
-    for (const suggestion of invoiceData?.approvedSuggestions || []) {
-      items.push({
-        description: suggestion.suggestion,
-        material_cost: 0,
-        labor_cost: Number(suggestion.price || 0),
-        total_cost: Number(suggestion.price || 0),
-      })
-    }
-
-    for (const work of invoiceData?.additionalWork || []) {
-      if ((work?.description || '').trim() || Number(work?.price || 0) > 0) {
-        items.push({
-          description: (work.description || 'Additional Work').trim(),
-          material_cost: 0,
-          labor_cost: Number(work.price || 0),
-          total_cost: Number(work.price || 0),
-        })
-      }
-    }
-
-    return items
   }
 
   const completeAndUploadToDashboard = async () => {
@@ -751,16 +720,6 @@ export const SummaryReport: FC<SummaryReportProps> = ({
           </div>
         </div>
       </div>
-
-      {showInvoicePrint && invoiceData && (
-        <InvoicePrintAny
-          customerName={customerName}
-          address={address}
-          inspectionDate={inspectionDate}
-          technicianName={technicianName}
-          invoiceData={invoiceData}
-        />
-      )}
 
       <div className="report-view-toggle no-export">
         <button
@@ -927,7 +886,8 @@ export const SummaryReport: FC<SummaryReportProps> = ({
         )}
 
         <button
-          onClick={() => setShowInvoiceModal(true)}
+          onClick={() => openInvoice(false)}
+          disabled={billingBusy}
           className="btn btn-secondary"
           type="button"
         >
@@ -946,13 +906,16 @@ export const SummaryReport: FC<SummaryReportProps> = ({
       </div>
 
       {uploadError && <div style={{ padding: 16, color: 'crimson' }}>{uploadError}</div>}
+      <div className="summary-actions">
+        <button type="button" className="btn btn-primary" disabled={billingBusy} onClick={() => openInvoice(true)}>{billingBusy ? 'Working…' : 'Email Invoice & Payment Link'}</button>
+        {billingResult?.invoice && <button type="button" className="btn btn-secondary" disabled={billingBusy} onClick={downloadInvoice}>Download Invoice PDF</button>}
+      </div>
+      {billingMessage && <p role="status" aria-live="polite" style={{padding:16}}>{billingMessage}</p>}
+      {billingResult?.invoice && <InvoicePrint invoice={billingResult.invoice} lines={billingResult.lines || []} customerName={customerName} address={address} />}
+
 
       {showInvoiceModal && (
-        <InvoiceModalAny
-          selectedSuggestions={selectedSuggestions}
-          onClose={() => setShowInvoiceModal(false)}
-          onGenerateInvoice={handleGenerateInvoice}
-        />
+        <InvoiceModal initialDraft={billingDraft} sendEmail={invoiceSendMode} recipient={customerEmail} onClose={() => setShowInvoiceModal(false)} onSave={saveInvoice} />
       )}
     </div>
   )

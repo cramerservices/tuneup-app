@@ -45,6 +45,7 @@ interface InspectionFormProps {
   selectedServices?: string[]
   inspectionId?: string
 onViewSummary: (data: {
+  inspectionId?: string
   customerName: string
   customerEmail?: string
   address: string
@@ -735,6 +736,7 @@ const { data: inspection, error: inspectionError } = await supabase
 
       setTimeout(() => {
        onViewSummary({
+  inspectionId: finalInspectionId,
   customerName,
   customerEmail,
   address,

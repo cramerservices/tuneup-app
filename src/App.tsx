@@ -60,6 +60,7 @@ interface SystemReadings {
   capacitorCommon?: string
 }
 interface SummaryData {
+  inspectionId?: string
   customerName: string
   address: string
   technicianName: string
@@ -278,6 +279,7 @@ function InspectionWrapper({ initialInspectionId }: { initialInspectionId?: stri
   }
 
   const handleViewSummary = (data: SummaryData) => {
+    setInspectionId(data.inspectionId)
     setSummaryData(data)
     setCurrentStep('summary')
   }
