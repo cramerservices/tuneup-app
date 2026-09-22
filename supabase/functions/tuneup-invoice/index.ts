@@ -395,7 +395,7 @@ Deno.serve(async req => {
       if (error) throw error
       return json(200,{success:true,invoiceId:data.invoice_id})
     }
-    if (!['get','save','generate','send','pdf','checkout'].includes(action) || !uuid(quick ? invoiceId : inspectionId)) return json(400, { success: false, error: 'Invalid invoice request.' })
+    if (!['get','save','generate','send','pdf','checkout','send_only'].includes(action) || !uuid(quick ? invoiceId : inspectionId)) return json(400, { success: false, error: 'Invalid invoice request.' })
     if (quick && ['save','generate'].includes(action)) throw new Error('Use quick invoice creation.')
     const billingTable = quick ? 'quick_invoice_billing' : 'tuneup_billing'
     const billingColumn = quick ? 'invoice_id' : 'inspection_id'
@@ -421,6 +421,35 @@ Deno.serve(async req => {
     if (action === 'get' || action === 'save' || action === 'generate') return json(200, result)
     const pdfBase64 = action === 'checkout' ? '' : makePdf(invoice, lines || [], {...billing.snapshot, customer_email:billing.recipient_email})
     if (action === 'pdf') return json(200, { ...result, pdfBase64 })
+    if (action === 'send_only') {
+      if (invoice.status === 'cancelled') throw new Error('Cancelled invoices cannot be emailed.')
+      const to = billing.recipient_email
+      if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to || '')) throw new Error('A valid customer email is required.')
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (!resendKey) throw new Error('Email service is not configured.')
+      const paid = Number(invoice.amount_due) <= 0
+      const invoiceNumber = escape(invoice.invoice_number)
+      // Stable PDF content gives retries the same provider key, without creating a checkout.
+      const digest = await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pdfBase64))
+      const version = Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')
+      const email = await fetch('https://api.resend.com/emails',{
+        method:'POST',headers:{Authorization:`Bearer ${resendKey}`,'Content-Type':'application/json','Idempotency-Key':`invoice-only-${invoice.id}-${version}`},
+        body:JSON.stringify({
+          from:'Cramer Services <Invoice@cramerservicesllc.com>',reply_to:'cramerservicesllc@gmail.com',to:[to],
+          subject:`Invoice ${invoice.invoice_number}${paid ? ' - Paid' : ''} - Cramer Services`,
+          text:`Hi ${billing.snapshot?.customer_name || 'Customer'},\n\nYour itemized invoice ${invoice.invoice_number} is attached.\nTotal: ${money(invoice.total_amount)}\nPaid: ${money(invoice.amount_paid)}\nBalance due: ${money(invoice.amount_due)}${paid ? '\nPaid in full. Thank you!' : ''}\n\nCramer Services LLC\n314-267-8594`,
+          html:`<div style="font-family:Arial,sans-serif;line-height:1.6"><p>Hi ${escape(billing.snapshot?.customer_name || 'Customer')},</p><p>Your itemized invoice <strong>${invoiceNumber}</strong> is attached.</p><p>Total: ${money(invoice.total_amount)}<br>Paid: ${money(invoice.amount_paid)}<br><strong>Balance due: ${money(invoice.amount_due)}</strong></p>${paid ? '<p>Paid in full. Thank you!</p>' : ''}<p>Cramer Services LLC<br>314-267-8594</p></div>`,
+          attachments:[{filename:`invoice-${invoice.invoice_number}.pdf`,content:pdfBase64}],
+        }),signal:AbortSignal.timeout(25000),
+      })
+      const sent = await email.json()
+      if (!email.ok || !sent.id) throw new Error(sent.message || 'Email provider did not confirm the invoice email.')
+      if (invoice.status === 'draft') {
+        const updated = await admin.from('crm_invoices').update({status:'sent'}).eq('id',invoice.id).eq('status','draft')
+        if (updated.error) throw new Error('Email accepted, but invoice status could not be updated. Retrying safely reuses the same email.')
+      }
+      return json(200,{...result,emailId:sent.id})
+    }
     if (invoice.status === 'cancelled' || invoice.status === 'paid' || Number(invoice.amount_due) <= 0) throw new Error('This invoice has no payable balance.')
     const to = billing.recipient_email
     if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to || '')) throw new Error('A valid customer email is required on the report.')

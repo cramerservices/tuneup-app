@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import vm from 'node:vm'
+import {webcrypto} from 'node:crypto'
 import ts from 'typescript'
 import { jsPDF } from 'jspdf'
 const root=new URL('../',import.meta.url)
@@ -32,7 +33,7 @@ function setup({role='admin',paid=false,providerFails=false,quick=false}={}) {
   expire:async()=>({}),
  }} }
  let handler
- vm.runInNewContext(code,{createClient:()=>admin,Stripe,jsPDF,invoiceLines,Response,Request,AbortSignal,Date,
+ vm.runInNewContext(code,{createClient:()=>admin,Stripe,jsPDF,invoiceLines,Response,Request,AbortSignal,Date,crypto:webcrypto,TextEncoder,
   Deno:{env:{get:()=> 'test-config'},serve:fn=>{handler=fn}},
   fetch:async(_,opts)=>{state.emails.push(JSON.parse(opts.body));return Response.json(providerFails?{message:'Sender rejected'}:{id:'email_test_one'},{status:providerFails?422:200})},
  })
@@ -86,4 +87,21 @@ test('quick invoice email uses its separate billing record',async()=>{
 test('quick invoice customer access and paid balance are blocked',async()=>{
  assert.equal((await setup({quick:true,role:'customer'}).call('checkout')).status,403)
  const app=setup({quick:true,paid:true});assert.equal((await app.call('checkout')).status,400);assert.equal(app.state.sessions.length,0)
+})
+
+test('invoice-only email has PDF and no checkout or payment link',async()=>{
+ const app=setup({quick:true});const res=await app.call('send_only');assert.equal(res.status,200,JSON.stringify(await res.json()))
+ assert.equal(app.state.sessions.length,0);assert.equal(app.state.emails.length,1)
+ assert.doesNotMatch(app.state.emails[0].html,/href=|Pay Now|checkout.stripe/)
+ assert.doesNotMatch(app.state.emails[0].text,/Pay securely|checkout.stripe/)
+ assert.equal(Buffer.from(app.state.emails[0].attachments[0].content,'base64').subarray(0,5).toString(),'%PDF-')
+ assert.equal(app.state.invoice.amount_due,275.25)
+})
+test('invoice-only email works for paid invoices and preserves paid status',async()=>{
+ const app=setup({quick:true,paid:true});const res=await app.call('send_only');assert.equal(res.status,200)
+ assert.match(app.state.emails[0].html,/Paid in full/);assert.equal(app.state.invoice.status,'paid');assert.equal(app.state.sessions.length,0)
+})
+test('invoice-only email reports provider rejection',async()=>{
+ const app=setup({quick:true,providerFails:true});assert.equal((await app.call('send_only')).status,400)
+ assert.equal(app.state.invoice.status,'draft');assert.equal(app.state.sessions.length,0)
 })
