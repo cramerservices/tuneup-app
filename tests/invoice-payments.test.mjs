@@ -17,9 +17,9 @@ const choices=[
 const draft={choices}
 const raw=fs.readFileSync(new URL('supabase/functions/tuneup-invoice/index.ts',root),'utf8').replace(/^import .*\n/gm,'')
 const code=ts.transpile(raw,{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None})
-function setup({role='admin',paid=false,providerFails=false}={}) {
+function setup({role='admin',paid=false,providerFails=false,quick=false}={}) {
  const state={emails:[],sessions:[],invoice:{id:'11111111-1111-4111-8111-111111111111',invoice_number:'INV-TEST',customer_id:'customer-test',invoice_date:'2026-09-21',due_date:'2026-09-28',created_at:'2026-09-21T00:00:00Z',status:paid?'paid':'draft',total_amount:275.25,amount_paid:paid?275.25:0,amount_due:paid?0:275.25},billing:{inspection_id:'22222222-2222-4222-8222-222222222222',invoice_id:'11111111-1111-4111-8111-111111111111',recipient_email:'cramerservicesllc@gmail.com',draft,snapshot:{customer_name:'Test Customer',address:'TEST ONLY'}}}
- const tables={tuneup_billing:state.billing,crm_invoices:state.invoice,crm_invoice_line_items:invoiceLines(draft)}
+ const tables={quick_invoice_billing:state.billing,tuneup_billing:state.billing,crm_invoices:state.invoice,crm_invoice_line_items:invoiceLines(draft)}
  const admin={auth:{getUser:async()=>({data:{user:{id:'staff-id',email:'staff@example.com',app_metadata:{role}}}})},from:table=>{
   let patch
   const result=()=>{if(patch)Object.assign(tables[table],patch);return {data:tables[table],error:null}}
@@ -36,7 +36,7 @@ function setup({role='admin',paid=false,providerFails=false}={}) {
   Deno:{env:{get:()=> 'test-config'},serve:fn=>{handler=fn}},
   fetch:async(_,opts)=>{state.emails.push(JSON.parse(opts.body));return Response.json(providerFails?{message:'Sender rejected'}:{id:'email_test_one'},{status:providerFails?422:200})},
  })
- return {state,call:action=>handler(new Request('https://example.com',{method:'POST',headers:{Authorization:'Bearer mock'},body:JSON.stringify({action,inspectionId:state.billing.inspection_id})}))}
+ return {state,call:action=>handler(new Request('https://example.com',{method:'POST',headers:{Authorization:'Bearer mock'},body:JSON.stringify({action,quick,invoiceId:state.invoice.id,inspectionId:state.billing.inspection_id})}))}
 }
 test('only approved repairs and add-ons count, with cent rounding',()=>{
  assert.equal(invoiceTotal(draft),275.25);assert.equal(invoiceLines(draft).length,2)
@@ -67,4 +67,23 @@ test('paid invoice cannot create another checkout',async()=>{
 })
 test('provider failure is visible and does not mark email sent',async()=>{
  const app=setup({providerFails:true});const res=await app.call('send');assert.equal(res.status,400);assert.match((await res.json()).error,/Sender rejected/);assert.equal(app.state.billing.email_id,undefined)
+})
+
+test('quick invoice checkout returns a payment URL without sending email',async()=>{
+ const app=setup({quick:true});const res=await app.call('checkout');const data=await res.json()
+ assert.equal(res.status,200,JSON.stringify(data));assert.equal(data.checkoutUrl,'https://checkout.stripe.com/test')
+ assert.equal(app.state.emails.length,0);assert.equal(app.state.sessions.length,1)
+ assert.equal(app.state.sessions[0].params.payment_intent_data.receipt_email,'cramerservicesllc@gmail.com')
+ assert.equal(app.state.sessions[0].params.line_items.reduce((s,l)=>s+l.price_data.unit_amount,0),27525)
+})
+test('quick invoice repeated collection reuses the checkout session',async()=>{
+ const app=setup({quick:true});await app.call('checkout');await app.call('checkout');assert.equal(app.state.sessions.length,1)
+})
+test('quick invoice email uses its separate billing record',async()=>{
+ const app=setup({quick:true});const res=await app.call('send');assert.equal(res.status,200)
+ assert.equal(app.state.emails.length,1);assert.equal(app.state.billing.email_id,'email_test_one')
+})
+test('quick invoice customer access and paid balance are blocked',async()=>{
+ assert.equal((await setup({quick:true,role:'customer'}).call('checkout')).status,403)
+ const app=setup({quick:true,paid:true});assert.equal((await app.call('checkout')).status,400);assert.equal(app.state.sessions.length,0)
 })

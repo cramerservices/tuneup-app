@@ -157,7 +157,7 @@ function makePdf(invoice: any, lines: any[], snapshot: any) {
 
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
-    doc.text('HVAC tune-up and approved work', jobX + 10, y + headerH + 55);
+    doc.text(snapshot?.quick_invoice ? 'Service and repair invoice' : 'HVAC tune-up and approved work', jobX + 10, y + headerH + 55);
     doc.setTextColor(0, 0, 0);
 
     y += boxH + 10;
@@ -375,12 +375,35 @@ Deno.serve(async req => {
       return json(403, { success: false, error: 'This account is not approved to manage invoices.' })
     }
     const body = await req.json()
-    const { action, inspectionId } = body
-    if (!['get','save','generate','send','pdf'].includes(action) || !/^[0-9a-f-]{36}$/i.test(inspectionId || '')) return json(400, { success: false, error: 'Invalid invoice request.' })
+    const { action, inspectionId, invoiceId } = body
+    const quick = body.quick === true
+    const uuid = (v: unknown) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
-    let { data: billing, error: billingError } = await admin.from('tuneup_billing').select('*').eq('inspection_id', inspectionId).maybeSingle()
+    if (action === 'quick_list') {
+      const { data, error } = await admin.from('quick_invoice_billing').select('invoice_id,snapshot,updated_at,crm_invoices(invoice_number,status,total_amount,amount_due)').order('updated_at',{ascending:false}).limit(50)
+      if (error) throw error
+      return json(200,{success:true,invoices:data})
+    }
+    if (action === 'quick_create') {
+      const c = body.customer || {}
+      if (!uuid(body.requestId) || !String(c.name || '').trim() || String(c.name).length > 200 || !/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(c.email || '')) throw new Error('Enter a customer name and valid email.')
+      if (!String(c.address || '').trim() || String(c.address).length>500 || !String(c.technician || '').trim() || String(c.technician).length>200 || String(c.notes || '').length>4000 || !/^\d{4}-\d{2}-\d{2}$/.test(c.serviceDate || '')) throw new Error('Enter the service address, technician, and service date.')
+      const lines = invoiceLines(body.draft)
+      const cents = lines.reduce((sum,l)=>sum+Math.round(l.total_cost*100),0)
+      if (cents<50 || cents>99999999) throw new Error('Invoice total must be between $0.50 and $999,999.99.')
+      const {data,error} = await admin.rpc('create_quick_invoice',{p_request_id:body.requestId,p_customer:c,p_draft:body.draft,p_line_items:lines,p_actor:user.id})
+      if (error) throw error
+      return json(200,{success:true,invoiceId:data.invoice_id})
+    }
+    if (!['get','save','generate','send','pdf','checkout'].includes(action) || !uuid(quick ? invoiceId : inspectionId)) return json(400, { success: false, error: 'Invalid invoice request.' })
+    if (quick && ['save','generate'].includes(action)) throw new Error('Use quick invoice creation.')
+    const billingTable = quick ? 'quick_invoice_billing' : 'tuneup_billing'
+    const billingColumn = quick ? 'invoice_id' : 'inspection_id'
+    const billingId = quick ? invoiceId : inspectionId
+    let { data: billing, error: billingError } = await admin.from(billingTable).select('*').eq(billingColumn, billingId).maybeSingle()
     if (billingError) throw billingError
-    if (action !== 'get' && action !== 'pdf' && !billing?.invoice_id) {
+    if (quick && !billing) throw new Error('Quick invoice not found.')
+    if (!quick && action !== 'get' && action !== 'pdf' && !billing?.invoice_id) {
       const draft = body.draft || billing?.draft
       const lines = invoiceLines(draft)
       if (action !== 'save' && lines.length === 0) throw new Error('Approve at least one invoice item.')
@@ -394,19 +417,19 @@ Deno.serve(async req => {
     if (invoiceError) throw invoiceError
     const { data: lines, error: lineError } = await admin.from('crm_invoice_line_items').select('*').eq('invoice_id', invoice.id).order('sort_order')
     if (lineError) throw lineError
-    const result = { success: true, draft: billing.draft, invoice, lines, recipient: billing.recipient_email }
+    const result = { success: true, draft: billing.draft, invoice, lines, snapshot:billing.snapshot, recipient: billing.recipient_email }
     if (action === 'get' || action === 'save' || action === 'generate') return json(200, result)
-    const pdfBase64 = makePdf(invoice, lines || [], billing.snapshot)
+    const pdfBase64 = action === 'checkout' ? '' : makePdf(invoice, lines || [], {...billing.snapshot, customer_email:billing.recipient_email})
     if (action === 'pdf') return json(200, { ...result, pdfBase64 })
     if (invoice.status === 'cancelled' || invoice.status === 'paid' || Number(invoice.amount_due) <= 0) throw new Error('This invoice has no payable balance.')
     const to = billing.recipient_email
     if (!/^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(to || '')) throw new Error('A valid customer email is required on the report.')
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
     const resendKey = Deno.env.get('RESEND_API_KEY')
-    if (!stripeKey || !resendKey) throw new Error('Payment or email service is not configured.')
+    if (!stripeKey || (action === 'send' && !resendKey)) throw new Error('Payment or email service is not configured.')
     const stripe = new Stripe(stripeKey, { apiVersion: '2026-07-29.dahlia', maxNetworkRetries: 2, timeout: 20000 })
     const cents = Math.round(Number(invoice.amount_due) * 100)
-    if (cents < 50) throw new Error('Stripe payments require a balance of at least $0.50.')
+    if (cents < 50 || cents > 99999999) throw new Error('Stripe payments require a balance of at least $0.50.')
     let session: Stripe.Checkout.Session | null = null
     const previousId = invoice.stripe_checkout_session_id
     if (previousId) {
@@ -422,15 +445,17 @@ Deno.serve(async req => {
         : [{quantity:1,price_data:{currency:'usd',unit_amount:cents,product_data:{name:`Balance for invoice ${invoice.invoice_number}`}}}]
       session = await stripe.checkout.sessions.create({
         mode: 'payment', integration_identifier: 'tuneup_invoice_nqxtmzpa', customer_email: to,
-        success_url: 'https://www.cramerservicesllc.com/?invoicePayment=success',
-        cancel_url: 'https://www.cramerservicesllc.com/?invoicePayment=cancelled',
+        success_url: quick ? 'https://www.cramerservies.com/#/payment-result?status=submitted' : 'https://www.cramerservicesllc.com/?invoicePayment=success',
+        cancel_url: quick ? 'https://www.cramerservies.com/#/payment-result?status=cancelled' : 'https://www.cramerservicesllc.com/?invoicePayment=cancelled',
         line_items: chargeLines,
+        payment_intent_data: {receipt_email:to},
         metadata: { kind:'invoice_payment',invoice_id:invoice.id,invoice_number:invoice.invoice_number,customer_id:invoice.customer_id,payment_amount:(cents/100).toFixed(2),payment_type:'full',amount_due_before_payment:(cents/100).toFixed(2),total_amount:Number(invoice.total_amount).toFixed(2) },
       }, { idempotencyKey: `tuneup-invoice-${invoice.id}-${cents}-${previousId || 'initial'}` })
       const saved = await admin.from('crm_invoices').update({ stripe_checkout_session_id: session.id }).eq('id',invoice.id)
       if (saved.error) throw saved.error
     }
     if (!session.url) throw new Error('Stripe did not return a payment link.')
+    if (action === 'checkout') return json(200,{...result,checkoutUrl:session.url,expiresAt:session.expires_at})
     if (billing.email_id && billing.email_session_id === session.id) return json(200, {...result, emailId:billing.email_id,alreadySent:true})
     const invoiceNumber = escape(invoice.invoice_number)
     const email = await fetch('https://api.resend.com/emails', {
@@ -445,7 +470,7 @@ Deno.serve(async req => {
     })
     const sent = await email.json()
     if (!email.ok || !sent.id) throw new Error(sent.message || 'Email provider did not confirm the invoice email.')
-    const recorded = await admin.from('tuneup_billing').update({email_id:sent.id,email_session_id:session.id,email_sent_at:new Date().toISOString()}).eq('inspection_id',inspectionId)
+    const recorded = await admin.from(billingTable).update({email_id:sent.id,email_session_id:session.id,email_sent_at:new Date().toISOString()}).eq(billingColumn,billingId)
     if (recorded.error) throw new Error('Email accepted, but the send record could not be saved. Retrying will reuse the same invoice.')
     const updated = await admin.from('crm_invoices').update({status:'sent'}).eq('id',invoice.id).eq('status','draft')
     if (updated.error) throw new Error('Email accepted, but invoice status could not be updated.')

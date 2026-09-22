@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface ServiceSelectionProps {
   onNext: (services: string[]) => void
@@ -6,6 +7,7 @@ interface ServiceSelectionProps {
 }
 
 export function ServiceSelection({ onNext, onViewSaved }: ServiceSelectionProps) {
+  const navigate = useNavigate()
   const [selectedServices, setSelectedServices] = useState<string[]>([])
 
   const services = [
@@ -32,6 +34,10 @@ export function ServiceSelection({ onNext, onViewSaved }: ServiceSelectionProps)
         <h1>Select Service Type</h1>
         <p>Select what you’re servicing so the checklist matches the job.</p>
 
+        <div style={{marginTop:20,padding:20,background:'#eef5ff',borderRadius:12}}>
+          <h2 style={{margin:'0 0 8px'}}>Service or repair without a tune-up?</h2>
+          <button className="btn btn-primary btn-large" type="button" onClick={()=>navigate('/quick-invoice')}>Quick Invoice & Collect Payment</button>
+        </div>
         {onViewSaved && (
           <div style={{ marginTop: 12 }}>
             <button type="button" className="btn btn-secondary" onClick={onViewSaved}>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 
 import { supabase } from './lib/supabase'
 import html2canvas from 'html2canvas'
 import { createReportPdf } from './lib/reportPdf'
 
+import { QuickInvoice } from './components/QuickInvoice'
 import { ServiceSelection } from './components/ServiceSelection'
 import { InspectionFormUpdated as InspectionForm } from './components/InspectionFormUpdated'
 import { SummaryReport } from './components/SummaryReport'
@@ -441,12 +442,23 @@ function InspectionByIdWrapper() {
 }
 
 export default function App() {
+  const location = useLocation()
+  if (location.pathname === '/payment-result') {
+    const cancelled = new URLSearchParams(location.search).get('status') === 'cancelled'
+    return <main style={{maxWidth:560,margin:'60px auto',padding:24,fontFamily:'Arial,sans-serif'}}>
+      <h1>Cramer Services</h1><h2>{cancelled ? 'Payment not completed' : 'Thank you'}</h2>
+      <p>{cancelled ? 'Return to your technician or reopen the payment link to try again.' : 'Your checkout is complete. Your technician will confirm the payment status. Some payment methods take additional time to settle.'}</p>
+      <p>Questions? Call <a href="tel:3142678594">314-267-8594</a>.</p>
+    </main>
+  }
   return (
     <TechAuthGate>
       <Routes>
         <Route path="/" element={<InspectionWrapper />} />
         <Route path="/dashboard" element={<SavedInspectionsWrapper />} />
         <Route path="/inspection/:inspectionId" element={<InspectionByIdWrapper />} />
+        <Route path="/quick-invoice" element={<QuickInvoice />} />
+        <Route path="/quick-invoice/:invoiceId" element={<QuickInvoice />} />
         <Route path="/saved" element={<SavedInspectionsWrapper />} />
         <Route path="/plans" element={<MaintenancePlansPage />} />
         <Route path="/dashboard/plans" element={<MaintenancePlansPage />} />
